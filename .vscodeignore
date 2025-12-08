@@ -1,0 +1,35 @@
+# Development files
+.vscode/**
+.vscode-test/**
+src/**
+.gitignore
+.yarnrc
+vsc-extension-quickstart.md
+**/tsconfig.json
+**/.eslintrc.json
+**/*.map
+**/*.ts
+
+# Dependencies (bundled in out/)
+node_modules/**
+
+# Documentation (keep README, exclude dev docs)
+dev-docs/**
+.claude/**
+
+# Git
+.git/**
+.github/**
+
+# Package files
+*.vsix
+package-lock.json
+
+# Test files
+test/**
+**/*.test.js
+
+# Misc
+.DS_Store
+Thumbs.db
+*.log
