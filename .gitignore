@@ -1,0 +1,28 @@
+# Compiled output
+out/
+
+# Dependencies
+node_modules/
+
+# Test artifacts
+.vscode-test/
+
+# Packaged extension
+*.vsix
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Editor
+.idea/
+*.swp
+*.swo
+
+# Local testing
+.vscode/terminal-tasks.json
+.vscode/tasks.json
