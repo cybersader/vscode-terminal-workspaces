@@ -2,7 +2,7 @@
   "name": "terminal-tasks-manager",
   "displayName": "Terminal Tasks Manager",
   "description": "Manage terminal tasks with a sidebar GUI. Supports WSL, tmux, PowerShell, nested folders, profiles, and more. Perfect for multi-project workflows.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "publisher": "cybersader",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -424,7 +424,14 @@
         "terminalTasksManager.defaultProfile": {
           "type": "string",
           "default": "wsl-default",
-          "enum": ["wsl-default", "wsl-tmux", "powershell", "cmd", "bash", "default"],
+          "enum": [
+            "wsl-default",
+            "wsl-tmux",
+            "powershell",
+            "cmd",
+            "bash",
+            "default"
+          ],
           "enumDescriptions": [
             "WSL terminal (auto-detects Windows vs WSL environment)",
             "WSL with tmux (attach-or-create sessions)",
