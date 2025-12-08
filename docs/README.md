@@ -1,6 +1,6 @@
 # Documentation
 
-Welcome to the Terminal Tasks Manager documentation.
+Welcome to the Terminal Workspaces documentation.
 
 ## User Documentation
 
@@ -19,5 +19,5 @@ Welcome to the Terminal Tasks Manager documentation.
 
 ## Getting Help
 
-- **Issues**: [GitHub Issues](https://github.com/cybersader/vscode-terminal-tasks-manager/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/cybersader/vscode-terminal-tasks-manager/discussions)
+- **Issues**: [GitHub Issues](https://github.com/cybersader/vscode-terminal-workspaces/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/cybersader/vscode-terminal-workspaces/discussions)

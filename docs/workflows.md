@@ -1,6 +1,6 @@
 # Workflows
 
-Recommended patterns and opinionated workflows for Terminal Tasks Manager.
+Recommended patterns and opinionated workflows for Terminal Workspaces.
 
 ## Table of Contents
 
@@ -13,7 +13,7 @@ Recommended patterns and opinionated workflows for Terminal Tasks Manager.
 
 ## Philosophy
 
-Terminal Tasks Manager is built around these principles:
+Terminal Workspaces is built around these principles:
 
 1. **Terminals as First-Class Citizens** - Terminal sessions deserve the same organizational tools as files and folders
 2. **Persistence Over Recreation** - Don't rebuild your environment; persist it with tmux
@@ -25,7 +25,7 @@ Terminal Tasks Manager is built around these principles:
 ### The Ideal Setup
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Active Projects
 │   ├── Project A (tmux)
 │   ├── Project B (tmux)
@@ -59,7 +59,7 @@ Terminal Tasks Manager
 For monorepos with multiple packages:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Monorepo Root
 │   └── Root Terminal (for top-level commands)
 ├── Packages
@@ -82,7 +82,7 @@ Terminal Tasks Manager
 For distributed microservices:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Services
 │   ├── auth-service
 │   ├── user-service
@@ -107,7 +107,7 @@ Terminal Tasks Manager
 For completely separate projects:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Work
 │   ├── Client Project A
 │   └── Internal Tool
@@ -131,7 +131,7 @@ Terminal Tasks Manager
 When using AI coding assistants:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Current Context
 │   ├── Main Project (tmux)
 │   └── Test Runner (tmux)
@@ -152,7 +152,7 @@ Terminal Tasks Manager
 When working on interconnected systems:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Frontend (tmux)
 │   └── [auto-runs: npm run dev]
 ├── Backend (tmux)
@@ -183,7 +183,7 @@ tmux new -s project-web
 
 **In VS Code (later):**
 1. Connect via Remote-SSH extension
-2. Open Terminal Tasks Manager
+2. Open Terminal Workspaces
 3. See sessions under "Untracked Sessions"
 4. Import as tasks for future use
 
@@ -206,7 +206,7 @@ Later, in VS Code:
 For containerized development:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Container Shell (default profile)
 ├── Host Shell (WSL profile)
 └── Docker Commands (bash profile)
@@ -218,9 +218,9 @@ Terminal Tasks Manager
 
 ### Shared Configuration
 
-Share terminal-tasks.json with your team:
+Share terminal-workspaces.json with your team:
 
-1. Add `.vscode/terminal-tasks.json` to version control
+1. Add `.vscode/terminal-workspaces.json` to version control
 2. Use relative paths where possible
 3. Use environment variables for user-specific paths:
    ```json
@@ -264,7 +264,7 @@ Create a starter configuration for new team members:
 Include documentation servers in your config:
 
 ```
-Terminal Tasks Manager
+Terminal Workspaces
 ├── Development
 │   └── App Server
 ├── Documentation

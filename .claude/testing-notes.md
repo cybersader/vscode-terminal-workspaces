@@ -29,7 +29,7 @@ mkdir -p ~/dev-test/deep/nested/path
 ### Scenario 1: Fresh Install
 
 1. Uninstall extension
-2. Delete any existing `.vscode/terminal-tasks.json`
+2. Delete any existing `.vscode/terminal-workspaces.json`
 3. Install from VSIX
 4. Verify empty state appears
 5. Add first task
@@ -110,7 +110,7 @@ for (let i = 0; i < 50; i++) {
   });
 }
 console.log(JSON.stringify({ version: '2.0.0', items: tasks }, null, 2));
-" > .vscode/terminal-tasks.json
+" > .vscode/terminal-workspaces.json
 ```
 
 ### Deeply Nested Folders

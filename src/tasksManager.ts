@@ -161,7 +161,7 @@ export class TasksManager {
     }
 
     private getConfig() {
-        return vscode.workspace.getConfiguration('terminalTasksManager');
+        return vscode.workspace.getConfiguration('terminalWorkspaces');
     }
 
     private createTaskDefinition(name: string, folderPath: string): TaskDefinition {

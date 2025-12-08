@@ -152,7 +152,7 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
         // Double-click to run
         item.command = {
-            command: 'terminalTasksManager.runTaskById',
+            command: 'terminalWorkspaces.runTaskById',
             title: 'Run Terminal',
             arguments: [task.id]
         };
@@ -169,7 +169,7 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         item.iconPath = new vscode.ThemeIcon('info');
         item.contextValue = 'placeholder';
         item.command = {
-            command: 'terminalTasksManager.addCurrentFileFolder',
+            command: 'terminalWorkspaces.addCurrentFileFolder',
             title: 'Add First Task'
         };
 
@@ -212,10 +212,10 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         ].join('\n');
 
         // Only attach on click if setting is enabled
-        const clickToAttach = vscode.workspace.getConfiguration('terminalTasksManager').get<boolean>('tmuxClickToAttach', false);
+        const clickToAttach = vscode.workspace.getConfiguration('terminalWorkspaces').get<boolean>('tmuxClickToAttach', false);
         if (clickToAttach) {
             item.command = {
-                command: 'terminalTasksManager.attachTmuxSession',
+                command: 'terminalWorkspaces.attachTmuxSession',
                 title: 'Attach to Session',
                 arguments: [session]
             };

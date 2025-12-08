@@ -1,9 +1,20 @@
 # Changelog
 
-All notable changes to Terminal Tasks Manager will be documented in this file.
+All notable changes to Terminal Workspaces will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [0.3.0] - 2024-12-08
+
+### Changed
+
+- **Renamed to Terminal Workspaces** - Clearer name reflecting the extension's purpose
+  - Extension ID: `terminal-workspaces`
+  - Config file: `terminal-workspaces.json` (was `terminal-tasks.json`)
+  - All settings now prefixed with `terminalWorkspaces.`
+- Added "Agentic Coding Workflows" documentation for Claude Code, Cursor, Aider
+- Added "Mobile + Desktop Seamless Coding" workflow with Tailscale/Termux/tmux
 
 ## [0.2.0] - 2024-12-08
 
@@ -38,9 +49,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - Complete rewrite with new data model
-- Configuration now stored in `terminal-tasks.json` (separate from `tasks.json`)
-- Tasks.json is auto-generated from terminal-tasks.json
-- All commands renamed to "Terminal Tasks Manager: ..." for clarity
+- Configuration now stored in `terminal-workspaces.json` (separate from `tasks.json`)
+- Tasks.json is auto-generated from terminal-workspaces.json
+- All commands renamed to "Terminal Workspaces: ..." for clarity
 
 ### Fixed
 
@@ -67,5 +78,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.3.0 | 2024-12-08 | Renamed to Terminal Workspaces, agentic workflow docs |
 | 0.2.0 | 2024-12-08 | Sidebar UI, folders, profiles, tmux integration |
 | 0.1.0 | 2024-12-07 | Initial release |

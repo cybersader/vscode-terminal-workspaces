@@ -1,6 +1,6 @@
 # Contributing
 
-Guidelines for contributing to Terminal Tasks Manager.
+Guidelines for contributing to Terminal Workspaces.
 
 ## Table of Contents
 
@@ -25,8 +25,8 @@ Guidelines for contributing to Terminal Tasks Manager.
 
 ```bash
 # Clone the repository
-git clone https://github.com/cybersader/vscode-terminal-tasks-manager.git
-cd vscode-terminal-tasks-manager
+git clone https://github.com/cybersader/vscode-terminal-workspaces.git
+cd vscode-terminal-workspaces
 
 # Install dependencies
 npm install
@@ -136,11 +136,11 @@ try {
 
 ```typescript
 // Good: Use VS Code APIs consistently
-const config = vscode.workspace.getConfiguration('terminalTasksManager');
+const config = vscode.workspace.getConfiguration('terminalWorkspaces');
 const value = config.get<boolean>('settingName', defaultValue);
 
 // Bad: Direct settings access
-const value = vscode.workspace.getConfiguration().get('terminalTasksManager.settingName');
+const value = vscode.workspace.getConfiguration().get('terminalWorkspaces.settingName');
 ```
 
 ## Pull Request Process
@@ -221,7 +221,7 @@ Logs, screenshots, etc.
 ### Where to Find Logs
 
 1. Open Output panel (`Ctrl+Shift+U`)
-2. Select "Terminal Tasks Manager" from dropdown
+2. Select "Terminal Workspaces" from dropdown
 3. Copy relevant log entries
 
 ## Feature Requests

@@ -1,6 +1,6 @@
 # User Guide
 
-Complete guide to using Terminal Tasks Manager.
+Complete guide to using Terminal Workspaces.
 
 ## Table of Contents
 
@@ -18,19 +18,19 @@ Complete guide to using Terminal Tasks Manager.
 
 1. Open VS Code
 2. Go to Extensions (`Ctrl+Shift+X`)
-3. Search for "Terminal Tasks Manager"
+3. Search for "Terminal Workspaces"
 4. Click Install
 
 Or install via command line:
 ```bash
-code --install-extension cybersader.terminal-tasks-manager
+code --install-extension cybersader.terminal-workspaces
 ```
 
 ## Interface Overview
 
 ### Activity Bar Icon
 
-Terminal Tasks Manager adds an icon to the Activity Bar (left sidebar). Click it to open the Terminal Tasks view.
+Terminal Workspaces adds an icon to the Activity Bar (left sidebar). Click it to open the Terminal Tasks view.
 
 ### Toolbar Buttons
 
@@ -59,13 +59,13 @@ Hover over a task for inline action buttons:
 ### Method 1: From Explorer (Recommended)
 
 1. Right-click any folder in the Explorer sidebar
-2. Select "Terminal Tasks Manager: Add Folder"
+2. Select "Terminal Workspaces: Add Folder"
 3. Configure the task in the wizard
 
 ### Method 2: From a File
 
 1. Right-click any file in Explorer
-2. Select "Terminal Tasks Manager: Add File's Folder"
+2. Select "Terminal Workspaces: Add File's Folder"
 3. The parent folder will be used as the working directory
 
 ### Method 3: From the Sidebar
@@ -79,7 +79,7 @@ Hover over a task for inline action buttons:
 ### Method 4: From Terminal Context Menu
 
 1. Right-click inside any terminal or on a terminal tab
-2. Select "Terminal Tasks Manager: Add Task"
+2. Select "Terminal Workspaces: Add Task"
 3. Choose a folder to associate with the task
 
 ### Task Creation Wizard
@@ -108,7 +108,7 @@ When adding a task, you'll be prompted for:
 
 - **Click** the ▶▶ (Run All) button in the toolbar
 - **Keyboard**: `Ctrl+Shift+Alt+T`
-- **Command Palette**: "Terminal Tasks Manager: Run All Terminals"
+- **Command Palette**: "Terminal Workspaces: Run All Terminals"
 
 ### Search and Run
 
@@ -217,7 +217,7 @@ Select a profile when creating a task, or change it later via Edit Task → Chan
 ### Customizing Shortcuts
 
 1. Open Keyboard Shortcuts (`Ctrl+K Ctrl+S`)
-2. Search for "Terminal Tasks Manager"
+2. Search for "Terminal Workspaces"
 3. Click the pencil icon to change bindings
 
 ## Command Palette
@@ -226,18 +226,18 @@ All commands are available via `Ctrl+Shift+P`:
 
 | Command | Description |
 |---------|-------------|
-| Terminal Tasks Manager: Add Task | Add from current context |
-| Terminal Tasks Manager: Browse for Folder | Add from file picker |
-| Terminal Tasks Manager: Create Folder | New organizational folder |
-| Terminal Tasks Manager: Run All Terminals | Launch everything |
-| Terminal Tasks Manager: Search | Find and run tasks |
-| Terminal Tasks Manager: Quick Open | Same as Search |
-| Terminal Tasks Manager: Open Settings | Extension settings |
-| Terminal Tasks Manager: Open Config File | Edit terminal-tasks.json |
-| Terminal Tasks Manager: Open tasks.json | View generated tasks |
-| Terminal Tasks Manager: Regenerate tasks.json | Force regeneration |
-| Terminal Tasks Manager: Import tmux Sessions | Bulk import tmux sessions |
-| Terminal Tasks Manager: Refresh tmux Sessions | Rescan for sessions |
+| Terminal Workspaces: Add Task | Add from current context |
+| Terminal Workspaces: Browse for Folder | Add from file picker |
+| Terminal Workspaces: Create Folder | New organizational folder |
+| Terminal Workspaces: Run All Terminals | Launch everything |
+| Terminal Workspaces: Search | Find and run tasks |
+| Terminal Workspaces: Quick Open | Same as Search |
+| Terminal Workspaces: Open Settings | Extension settings |
+| Terminal Workspaces: Open Config File | Edit terminal-workspaces.json |
+| Terminal Workspaces: Open tasks.json | View generated tasks |
+| Terminal Workspaces: Regenerate tasks.json | Force regeneration |
+| Terminal Workspaces: Import tmux Sessions | Bulk import tmux sessions |
+| Terminal Workspaces: Refresh tmux Sessions | Rescan for sessions |
 
 ## Tips
 
