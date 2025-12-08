@@ -1,6 +1,6 @@
 # Building & Testing
 
-Instructions for building, testing, and packaging Terminal Tasks Manager.
+Instructions for building, testing, and packaging Terminal Workspaces.
 
 ## Table of Contents
 
@@ -39,8 +39,8 @@ code --version    # Should be 1.85+
 
 ```bash
 # Clone repository
-git clone https://github.com/cybersader/vscode-terminal-tasks-manager.git
-cd vscode-terminal-tasks-manager
+git clone https://github.com/cybersader/vscode-terminal-workspaces.git
+cd vscode-terminal-workspaces
 
 # Install dependencies
 npm install
@@ -168,12 +168,12 @@ npm install -g @vscode/vsce
 vsce package
 ```
 
-This creates a `.vsix` file like `terminal-tasks-manager-0.2.0.vsix`.
+This creates a `.vsix` file like `terminal-workspaces-0.2.0.vsix`.
 
 ### Install VSIX Locally
 
 ```bash
-code --install-extension terminal-tasks-manager-0.2.0.vsix
+code --install-extension terminal-workspaces-0.2.0.vsix
 ```
 
 Or in VS Code: Extensions → `...` menu → "Install from VSIX..."
@@ -223,7 +223,7 @@ vsce publish patch  # 0.2.0 -> 0.2.1
 
 ### Post-Publish
 
-1. Verify on marketplace: https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-tasks-manager
+1. Verify on marketplace: https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-workspaces
 2. Test fresh install from marketplace
 3. Create GitHub release with VSIX attached
 4. Announce update (if significant)
@@ -339,7 +339,7 @@ Add to `package.json`:
 ```json
 "repository": {
   "type": "git",
-  "url": "https://github.com/cybersader/vscode-terminal-tasks-manager"
+  "url": "https://github.com/cybersader/vscode-terminal-workspaces"
 }
 ```
 

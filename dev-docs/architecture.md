@@ -1,6 +1,6 @@
 # Architecture
 
-Technical overview of the Terminal Tasks Manager codebase.
+Technical overview of the Terminal Workspaces codebase.
 
 ## Table of Contents
 
@@ -14,7 +14,7 @@ Technical overview of the Terminal Tasks Manager codebase.
 ## Project Structure
 
 ```
-vscode-terminal-tasks-manager/
+vscode-terminal-workspaces/
 ├── src/
 │   ├── extension.ts        # Entry point, command registration
 │   ├── configManager.ts    # Configuration loading/saving
@@ -49,7 +49,7 @@ vscode-terminal-tasks-manager/
 
 ### configManager.ts
 
-**Purpose:** Manage the `terminal-tasks.json` configuration file.
+**Purpose:** Manage the `terminal-workspaces.json` configuration file.
 
 **Responsibilities:**
 - Load and save configuration
@@ -192,7 +192,7 @@ extension.ts: activate()
        ↓
 ConfigManager.loadConfig()
        ↓
-Read .vscode/terminal-tasks.json
+Read .vscode/terminal-workspaces.json
        ↓
 Parse and validate
        ↓
@@ -232,7 +232,7 @@ Update in-memory config
        ↓
 ConfigManager.saveConfig()
        ↓
-Write terminal-tasks.json
+Write terminal-workspaces.json
        ↓
 ConfigManager.generateTasksJson()
        ↓
@@ -342,17 +342,17 @@ The extension activates on:
 
 | File | Purpose |
 |------|---------|
-| `.vscode/terminal-tasks.json` | Main configuration |
+| `.vscode/terminal-workspaces.json` | Main configuration |
 | `.vscode/tasks.json` | Generated VS Code tasks |
 
 ## Design Decisions
 
 ### Why Two Config Files?
 
-- `terminal-tasks.json` - Rich configuration with folders, profiles, overrides
+- `terminal-workspaces.json` - Rich configuration with folders, profiles, overrides
 - `tasks.json` - VS Code's native task format (limited structure)
 
-The extension generates `tasks.json` from `terminal-tasks.json` because:
+The extension generates `tasks.json` from `terminal-workspaces.json` because:
 1. VS Code's task runner is well-tested and feature-rich
 2. Users can still use other VS Code task features
 3. Separation of concerns between config and execution

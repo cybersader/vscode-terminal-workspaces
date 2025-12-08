@@ -1,6 +1,6 @@
 # Configuration
 
-Complete reference for Terminal Tasks Manager settings, profiles, and customization options.
+Complete reference for Terminal Workspaces settings, profiles, and customization options.
 
 ## Table of Contents
 
@@ -13,14 +13,14 @@ Complete reference for Terminal Tasks Manager settings, profiles, and customizat
 
 ## VS Code Settings
 
-Access via `Ctrl+,` → search "Terminal Tasks Manager" or add to `settings.json`:
+Access via `Ctrl+,` → search "Terminal Workspaces" or add to `settings.json`:
 
-### terminalTasksManager.defaultProfile
+### terminalWorkspaces.defaultProfile
 
 Default terminal profile for new tasks.
 
 ```json
-"terminalTasksManager.defaultProfile": "wsl-default"
+"terminalWorkspaces.defaultProfile": "wsl-default"
 ```
 
 **Options:**
@@ -31,47 +31,47 @@ Default terminal profile for new tasks.
 - `bash` - Native bash (Linux/macOS)
 - `default` - VS Code's default terminal
 
-### terminalTasksManager.autoGenerateTasksJson
+### terminalWorkspaces.autoGenerateTasksJson
 
-Automatically regenerate `.vscode/tasks.json` when `terminal-tasks.json` changes.
+Automatically regenerate `.vscode/tasks.json` when `terminal-workspaces.json` changes.
 
 ```json
-"terminalTasksManager.autoGenerateTasksJson": true
+"terminalWorkspaces.autoGenerateTasksJson": true
 ```
 
-### terminalTasksManager.groupTaskLabel
+### terminalWorkspaces.groupTaskLabel
 
 Label for the "run all" group task in tasks.json.
 
 ```json
-"terminalTasksManager.groupTaskLabel": "Open All Terminals"
+"terminalWorkspaces.groupTaskLabel": "Open All Terminals"
 ```
 
-### terminalTasksManager.createGroupTask
+### terminalWorkspaces.createGroupTask
 
 Whether to create a group task that runs all terminals.
 
 ```json
-"terminalTasksManager.createGroupTask": true
+"terminalWorkspaces.createGroupTask": true
 ```
 
-### terminalTasksManager.tmuxClickToAttach
+### terminalWorkspaces.tmuxClickToAttach
 
 Click untracked tmux sessions to attach immediately.
 
 ```json
-"terminalTasksManager.tmuxClickToAttach": false
+"terminalWorkspaces.tmuxClickToAttach": false
 ```
 
 When `false` (default), clicking shows session info. Right-click to attach.
 When `true`, single-click attaches to the session.
 
-### terminalTasksManager.experimentalPathValidation
+### terminalWorkspaces.experimentalPathValidation
 
 **[Experimental]** Validate task paths before running.
 
 ```json
-"terminalTasksManager.experimentalPathValidation": false
+"terminalWorkspaces.experimentalPathValidation": false
 ```
 
 When enabled:
@@ -123,7 +123,7 @@ The `wsl-tmux` profile:
 
 ## Config File Structure
 
-Configuration is stored in `.vscode/terminal-tasks.json`:
+Configuration is stored in `.vscode/terminal-workspaces.json`:
 
 ```json
 {
@@ -265,7 +265,7 @@ Commands to run after cd:
 
 ## Generated tasks.json
 
-Terminal Tasks Manager generates `.vscode/tasks.json` from your configuration.
+Terminal Workspaces generates `.vscode/tasks.json` from your configuration.
 
 ### Example Output
 
@@ -303,14 +303,14 @@ Terminal Tasks Manager generates `.vscode/tasks.json` from your configuration.
 
 Tasks.json is regenerated when:
 - You add, edit, or delete tasks
-- You save changes to terminal-tasks.json (if auto-generate enabled)
-- You run "Terminal Tasks Manager: Regenerate tasks.json"
+- You save changes to terminal-workspaces.json (if auto-generate enabled)
+- You run "Terminal Workspaces: Regenerate tasks.json"
 
 ### Manual Edits
 
 > **Warning**: Manual edits to tasks.json will be overwritten when regenerated.
 
-If you need custom tasks alongside Terminal Tasks Manager tasks:
+If you need custom tasks alongside Terminal Workspaces tasks:
 1. Disable `autoGenerateTasksJson`
 2. Manually merge your custom tasks after regeneration
 3. Or use a separate tasks file for custom tasks

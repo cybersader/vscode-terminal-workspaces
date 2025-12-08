@@ -1,6 +1,6 @@
 # tmux Integration
 
-Terminal Tasks Manager provides deep integration with tmux for persistent terminal sessions.
+Terminal Workspaces provides deep integration with tmux for persistent terminal sessions.
 
 ## Table of Contents
 
@@ -74,7 +74,7 @@ Best for: Connecting to sessions you know should exist (e.g., created via SSH).
 
 ## Untracked Sessions
 
-Terminal Tasks Manager can discover tmux sessions that aren't linked to any task.
+Terminal Workspaces can discover tmux sessions that aren't linked to any task.
 
 ### What are Untracked Sessions?
 
@@ -117,7 +117,7 @@ To track a session permanently:
 ### Refreshing Sessions
 
 Click ↻ on the "Untracked Sessions" header or run:
-"Terminal Tasks Manager: Refresh tmux Sessions"
+"Terminal Workspaces: Refresh tmux Sessions"
 
 ## Session Discovery Workflow
 

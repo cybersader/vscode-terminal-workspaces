@@ -14,8 +14,8 @@ Documentation for contributors and developers.
 
 ```bash
 # Clone and setup
-git clone https://github.com/cybersader/vscode-terminal-tasks-manager.git
-cd vscode-terminal-tasks-manager
+git clone https://github.com/cybersader/vscode-terminal-workspaces.git
+cd vscode-terminal-workspaces
 npm install
 
 # Development

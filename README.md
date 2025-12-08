@@ -1,18 +1,18 @@
-# Terminal Tasks Manager
+# Terminal Workspaces
 
 <p align="center">
-  <img src="images/icon.png" alt="Terminal Tasks Manager" width="128" height="128">
+  <img src="images/icon.png" alt="Terminal Workspaces" width="128" height="128">
 </p>
 
 <p align="center">
-  <a href="https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-tasks-manager">
-    <img src="https://img.shields.io/visual-studio-marketplace/v/cybersader.terminal-tasks-manager" alt="VS Marketplace Version">
+  <a href="https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-workspaces">
+    <img src="https://img.shields.io/visual-studio-marketplace/v/cybersader.terminal-workspaces" alt="VS Marketplace Version">
   </a>
-  <a href="https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-tasks-manager">
-    <img src="https://img.shields.io/visual-studio-marketplace/i/cybersader.terminal-tasks-manager" alt="VS Marketplace Installs">
+  <a href="https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-workspaces">
+    <img src="https://img.shields.io/visual-studio-marketplace/i/cybersader.terminal-workspaces" alt="VS Marketplace Installs">
   </a>
-  <a href="https://github.com/cybersader/vscode-terminal-tasks-manager/blob/main/LICENSE">
-    <img src="https://img.shields.io/github/license/cybersader/vscode-terminal-tasks-manager" alt="License">
+  <a href="https://github.com/cybersader/vscode-terminal-workspaces/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/cybersader/vscode-terminal-workspaces" alt="License">
   </a>
 </p>
 
@@ -31,7 +31,7 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 ## Quick Start
 
 1. Install the extension
-2. Click the Terminal Tasks Manager icon in the Activity Bar
+2. Click the Terminal Workspaces icon in the Activity Bar
 3. Click the `+` button or right-click a folder in Explorer → "Add Folder"
 4. Choose a profile and configure your task
 5. Click the play button to launch your terminal
@@ -62,19 +62,19 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 ```jsonc
 {
   // Default terminal profile
-  "terminalTasksManager.defaultProfile": "wsl-tmux",
+  "terminalWorkspaces.defaultProfile": "wsl-tmux",
 
-  // Auto-generate tasks.json from terminal-tasks.json
-  "terminalTasksManager.autoGenerateTasksJson": true,
+  // Auto-generate tasks.json from terminal-workspaces.json
+  "terminalWorkspaces.autoGenerateTasksJson": true,
 
   // Validate paths before running (experimental)
-  "terminalTasksManager.experimentalPathValidation": true
+  "terminalWorkspaces.experimentalPathValidation": true
 }
 ```
 
 See [Configuration](docs/configuration.md) for all options.
 
-## Why Terminal Tasks Manager?
+## Why Terminal Workspaces?
 
 **Problem**: Managing multiple projects means constantly `cd`-ing to different directories and setting up terminal sessions.
 
@@ -87,7 +87,7 @@ See [Configuration](docs/configuration.md) for all options.
 
 ## Agentic Coding Workflows
 
-Terminal Tasks Manager shines when working with **Claude Code**, **Cursor**, **Aider**, and other AI coding agents:
+Terminal Workspaces shines when working with **Claude Code**, **Cursor**, **Aider**, and other AI coding agents:
 
 - **Multi-Agent Sessions** - Run multiple Claude Code instances in different project directories simultaneously
 - **Quick Context Switching** - Jump between agent conversations across different codebases with one click
@@ -120,12 +120,12 @@ The ultimate setup for coding anywhere with full session persistence:
 - **WSL** - Linux environment on Windows running your dev setup
 - **tmux** - Session persistence that survives disconnects
 - **Termux** - Full Linux terminal on Android
-- **Terminal Tasks Manager** - Visual organization of all your project sessions
+- **Terminal Workspaces** - Visual organization of all your project sessions
 
 **How it works:**
 1. Set up Tailscale on your PC and phone
 2. Enable Tailscale SSH to your WSL instance
-3. Create tmux-profile tasks for each project in Terminal Tasks Manager
+3. Create tmux-profile tasks for each project in Terminal Workspaces
 4. Start Claude Code sessions in each tmux terminal
 5. Walk away from your PC...
 6. SSH from Termux on your phone → `tmux attach` → you're right where you left off
@@ -139,6 +139,6 @@ MIT
 
 ## Links
 
-- [GitHub Repository](https://github.com/cybersader/vscode-terminal-tasks-manager)
-- [Report Issues](https://github.com/cybersader/vscode-terminal-tasks-manager/issues)
-- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-tasks-manager)
+- [GitHub Repository](https://github.com/cybersader/vscode-terminal-workspaces)
+- [Report Issues](https://github.com/cybersader/vscode-terminal-workspaces/issues)
+- [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=cybersader.terminal-workspaces)

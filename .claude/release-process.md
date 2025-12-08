@@ -1,6 +1,6 @@
 # Release Process
 
-Checklist and steps for publishing new versions of Terminal Tasks Manager.
+Checklist and steps for publishing new versions of Terminal Workspaces.
 
 ## Pre-Release Checklist
 

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './configManager';
-import { TerminalTasksProvider, TaskTreeItem, TaskConfigDialog, FolderQuickPick, TmuxSessionData } from './terminalTasksProvider';
+import { TerminalTasksProvider, TaskTreeItem, TaskConfigDialog, FolderQuickPick, TmuxSessionData } from './terminalWorkspacesProvider';
 import { TerminalTaskItem, TaskFolder } from './types';
 import { TmuxManager, TmuxSession } from './tmuxManager';
 
@@ -36,7 +36,7 @@ async function pathExists(taskPath: string): Promise<boolean> {
  * Returns the task to run (possibly with updated path), or undefined to cancel
  */
 async function validateTaskPath(task: TerminalTaskItem): Promise<TerminalTaskItem | undefined> {
-    const config = vscode.workspace.getConfiguration('terminalTasksManager');
+    const config = vscode.workspace.getConfiguration('terminalWorkspaces');
     const experimentalValidation = config.get<boolean>('experimentalPathValidation', false);
 
     if (!experimentalValidation) {
@@ -111,7 +111,7 @@ async function validateTaskPath(task: TerminalTaskItem): Promise<TerminalTaskIte
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Terminal Tasks Manager is now active');
+    console.log('Terminal Workspaces is now active');
 
     configManager = new ConfigManager();
     treeDataProvider = new TerminalTasksProvider(configManager);
@@ -120,7 +120,7 @@ export function activate(context: vscode.ExtensionContext) {
     configManager.loadConfig();
 
     // Create and register the tree view
-    const treeView = vscode.window.createTreeView('terminalTasksView', {
+    const treeView = vscode.window.createTreeView('terminalWorkspacesView', {
         treeDataProvider: treeDataProvider,
         showCollapseAll: true,
         canSelectMany: false
@@ -131,7 +131,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const refreshCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.refresh',
+        'terminalWorkspaces.refresh',
         async () => {
             await configManager.loadConfig();
             treeDataProvider.refresh();
@@ -143,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const addFolderCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.addFolderToTasks',
+        'terminalWorkspaces.addFolderToTasks',
         async (uri: vscode.Uri) => {
             if (!uri) {
                 vscode.window.showErrorMessage('No folder selected');
@@ -179,7 +179,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const addCurrentFileFolderCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.addCurrentFileFolder',
+        'terminalWorkspaces.addCurrentFileFolder',
         async () => {
             // Build options based on what's available
             const options: (vscode.QuickPickItem & { action: string; path?: string })[] = [];
@@ -223,7 +223,7 @@ export function activate(context: vscode.ExtensionContext) {
 
             // If only browse is available, go straight to browse
             if (options.length === 1) {
-                await vscode.commands.executeCommand('terminalTasksManager.addBrowseFolder');
+                await vscode.commands.executeCommand('terminalWorkspaces.addBrowseFolder');
                 return;
             }
 
@@ -240,7 +240,7 @@ export function activate(context: vscode.ExtensionContext) {
             let folderName: string;
 
             if (selected.action === 'browse') {
-                await vscode.commands.executeCommand('terminalTasksManager.addBrowseFolder');
+                await vscode.commands.executeCommand('terminalWorkspaces.addBrowseFolder');
                 return;
             } else {
                 folderPath = selected.path!;
@@ -273,7 +273,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const addFileParentFolderCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.addFileParentFolder',
+        'terminalWorkspaces.addFileParentFolder',
         async (uri: vscode.Uri) => {
             if (!uri) {
                 // Fallback to active editor
@@ -314,7 +314,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const addFromTerminalCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.addFromTerminal',
+        'terminalWorkspaces.addFromTerminal',
         async () => {
             // VS Code doesn't expose terminal CWD directly, so we'll prompt user
             // to choose from available options or browse
@@ -351,7 +351,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             if (selected.action === 'browse') {
-                await vscode.commands.executeCommand('terminalTasksManager.addBrowseFolder');
+                await vscode.commands.executeCommand('terminalWorkspaces.addBrowseFolder');
                 return;
             }
 
@@ -384,7 +384,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const addBrowseFolderCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.addBrowseFolder',
+        'terminalWorkspaces.addBrowseFolder',
         async () => {
             const folderUri = await vscode.window.showOpenDialog({
                 canSelectFiles: false,
@@ -426,7 +426,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const addTaskFolderCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.addTaskFolder',
+        'terminalWorkspaces.addTaskFolder',
         async (item?: TaskTreeItem) => {
             const name = await vscode.window.showInputBox({
                 prompt: 'Enter folder name',
@@ -452,7 +452,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const runTaskByIdCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.runTaskById',
+        'terminalWorkspaces.runTaskById',
         async (taskId: string) => {
             const found = configManager.findItemById(taskId);
             if (!found || found.item.type !== 'task') {
@@ -478,7 +478,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const runTaskCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.runTask',
+        'terminalWorkspaces.runTask',
         async (item: TaskTreeItem) => {
             if (!item?.itemData) {
                 return;
@@ -511,7 +511,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const runAllTasksCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.runAllTasks',
+        'terminalWorkspaces.runAllTasks',
         async () => {
             const config = await configManager.getConfig();
             await vscode.commands.executeCommand(
@@ -522,7 +522,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const runFolderTasksCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.runFolderTasks',
+        'terminalWorkspaces.runFolderTasks',
         async (item: TaskTreeItem) => {
             if (!item?.itemData || item.itemData.type !== 'folder') {
                 return;
@@ -547,7 +547,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const editTaskCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.editTask',
+        'terminalWorkspaces.editTask',
         async (item: TaskTreeItem) => {
             if (!item?.itemData || item.itemData.type !== 'task') {
                 return;
@@ -575,7 +575,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const renameCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.rename',
+        'terminalWorkspaces.rename',
         async (item: TaskTreeItem) => {
             if (!item?.itemData) {
                 return;
@@ -614,7 +614,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const deleteCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.delete',
+        'terminalWorkspaces.delete',
         async (item: TaskTreeItem) => {
             if (!item?.itemData) {
                 return;
@@ -660,7 +660,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const moveToFolderCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.moveToFolder',
+        'terminalWorkspaces.moveToFolder',
         async (item: TaskTreeItem) => {
             if (!item?.itemData) {
                 return;
@@ -694,7 +694,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const openConfigCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.openConfig',
+        'terminalWorkspaces.openConfig',
         async () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             if (!workspaceFolders) {
@@ -702,7 +702,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            const configPath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', 'terminal-tasks.json');
+            const configPath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', 'terminal-workspaces.json');
 
             // Ensure config exists
             await configManager.getConfig();
@@ -719,7 +719,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const openTasksJsonCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.openTasksJson',
+        'terminalWorkspaces.openTasksJson',
         async () => {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             if (!workspaceFolders) {
@@ -744,7 +744,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const regenerateTasksJsonCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.regenerateTasksJson',
+        'terminalWorkspaces.regenerateTasksJson',
         async () => {
             try {
                 await configManager.generateTasksJson();
@@ -760,7 +760,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const openManagerCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.openTasksManager',
+        'terminalWorkspaces.openTasksManager',
         async () => {
             const config = await configManager.getConfig();
             const flatTasks = configManager.flattenTasks();
@@ -773,9 +773,9 @@ export function activate(context: vscode.ExtensionContext) {
                 );
 
                 if (action === 'Add Task') {
-                    vscode.commands.executeCommand('terminalTasksManager.addCurrentFileFolder');
+                    vscode.commands.executeCommand('terminalWorkspaces.addCurrentFileFolder');
                 } else if (action === 'Browse for Folder') {
-                    vscode.commands.executeCommand('terminalTasksManager.addBrowseFolder');
+                    vscode.commands.executeCommand('terminalWorkspaces.addBrowseFolder');
                 }
                 return;
             }
@@ -803,11 +803,11 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             if (selected.label === '$(add) Add new task...') {
-                vscode.commands.executeCommand('terminalTasksManager.addCurrentFileFolder');
+                vscode.commands.executeCommand('terminalWorkspaces.addCurrentFileFolder');
             } else if (selected.label === '$(folder-opened) Browse for folder...') {
-                vscode.commands.executeCommand('terminalTasksManager.addBrowseFolder');
+                vscode.commands.executeCommand('terminalWorkspaces.addBrowseFolder');
             } else if (selected.label === '$(new-folder) Create task folder...') {
-                vscode.commands.executeCommand('terminalTasksManager.addTaskFolder');
+                vscode.commands.executeCommand('terminalWorkspaces.addTaskFolder');
             } else {
                 // Run the selected task
                 const taskName = selected.label.replace(/^\$\([^)]+\)\s*/, '');
@@ -821,7 +821,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const refreshTmuxSessionsCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.refreshTmuxSessions',
+        'terminalWorkspaces.refreshTmuxSessions',
         async () => {
             if (!TmuxManager.isAvailable()) {
                 vscode.window.showWarningMessage('tmux is not available in this environment');
@@ -833,7 +833,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const importTmuxSessionsCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.importTmuxSessions',
+        'terminalWorkspaces.importTmuxSessions',
         async () => {
             if (!TmuxManager.isAvailable()) {
                 vscode.window.showWarningMessage('tmux is not available in this environment');
@@ -913,7 +913,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const attachTmuxSessionCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.attachTmuxSession',
+        'terminalWorkspaces.attachTmuxSession',
         async (sessionOrItem: TmuxSession | TaskTreeItem) => {
             let session: TmuxSession | undefined;
 
@@ -955,7 +955,7 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     const importTmuxSessionCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.importTmuxSession',
+        'terminalWorkspaces.importTmuxSession',
         async (item: TaskTreeItem) => {
             if (!item?.itemData || item.itemData.type !== 'tmuxSession') {
                 return;
@@ -1002,7 +1002,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const searchTasksCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.searchTasks',
+        'terminalWorkspaces.searchTasks',
         async () => {
             const flatTasks = configManager.flattenTasks();
 
@@ -1048,7 +1048,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const attachAllSessionsCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.attachAllSessions',
+        'terminalWorkspaces.attachAllSessions',
         async () => {
             if (!TmuxManager.isAvailable()) {
                 vscode.window.showWarningMessage('tmux is not available in this environment');
@@ -1087,7 +1087,7 @@ export function activate(context: vscode.ExtensionContext) {
     // =========================================================================
 
     const openSettingsCommand = vscode.commands.registerCommand(
-        'terminalTasksManager.openSettings',
+        'terminalWorkspaces.openSettings',
         async () => {
             await vscode.commands.executeCommand(
                 'workbench.action.openSettings',
@@ -1100,7 +1100,7 @@ export function activate(context: vscode.ExtensionContext) {
     // FILE WATCHER
     // =========================================================================
 
-    const configWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/terminal-tasks.json');
+    const configWatcher = vscode.workspace.createFileSystemWatcher('**/.vscode/terminal-workspaces.json');
     configWatcher.onDidChange(async () => {
         await configManager.loadConfig();
         treeDataProvider.refresh();

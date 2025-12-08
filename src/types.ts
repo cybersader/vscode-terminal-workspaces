@@ -1,7 +1,7 @@
 /**
- * Terminal Tasks Manager - Type Definitions
+ * Terminal Workspaces - Type Definitions
  *
- * This extension uses its own config file (terminal-tasks.json) to store
+ * This extension uses its own config file (terminal-workspaces.json) to store
  * rich configuration, then generates VS Code's tasks.json from it.
  */
 
@@ -96,7 +96,7 @@ export interface TaskFolder extends TaskItemBase {
 export type TaskItem = TerminalTaskItem | TaskFolder;
 
 // ============================================================================
-// CONFIGURATION FILE - Stored in .vscode/terminal-tasks.json
+// CONFIGURATION FILE - Stored in .vscode/terminal-workspaces.json
 // ============================================================================
 
 export interface TerminalTasksConfig {

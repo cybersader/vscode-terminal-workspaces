@@ -1,8 +1,8 @@
 {
-  "name": "terminal-tasks-manager",
-  "displayName": "Terminal Tasks Manager",
-  "description": "Manage terminal tasks with a sidebar GUI. Supports WSL, tmux, PowerShell, nested folders, profiles, and more. Perfect for multi-project workflows.",
-  "version": "0.2.1",
+  "name": "terminal-workspaces",
+  "displayName": "Terminal Workspaces",
+  "description": "Manage terminal sessions with a sidebar GUI. Supports WSL, tmux, PowerShell, nested folders, profiles, and more. Perfect for multi-project and agentic coding workflows.",
+  "version": "0.3.0",
   "publisher": "cybersader",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -44,384 +44,384 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "terminalTasksContainer",
-          "title": "Terminal Tasks Manager",
+          "id": "terminalWorkspacesContainer",
+          "title": "Terminal Workspaces",
           "icon": "$(terminal)"
         }
       ]
     },
     "views": {
-      "terminalTasksContainer": [
+      "terminalWorkspacesContainer": [
         {
-          "id": "terminalTasksView",
-          "name": "Terminal Tasks Manager",
+          "id": "terminalWorkspacesView",
+          "name": "Terminal Workspaces",
           "icon": "$(terminal)",
-          "contextualTitle": "Terminal Tasks Manager"
+          "contextualTitle": "Terminal Workspaces"
         }
       ]
     },
     "viewsWelcome": [
       {
-        "view": "terminalTasksView",
-        "contents": "No terminal tasks configured.\n[Add Current File's Folder](command:terminalTasksManager.addCurrentFileFolder)\n[Browse for Folder](command:terminalTasksManager.addBrowseFolder)\n[Open Config](command:terminalTasksManager.openConfig)"
+        "view": "terminalWorkspacesView",
+        "contents": "No terminal tasks configured.\n[Add Current File's Folder](command:terminalWorkspaces.addCurrentFileFolder)\n[Browse for Folder](command:terminalWorkspaces.addBrowseFolder)\n[Open Config](command:terminalWorkspaces.openConfig)"
       }
     ],
     "commands": [
       {
-        "command": "terminalTasksManager.refresh",
+        "command": "terminalWorkspaces.refresh",
         "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
-        "command": "terminalTasksManager.addFolderToTasks",
-        "title": "Terminal Tasks Manager: Add Folder",
+        "command": "terminalWorkspaces.addFolderToTasks",
+        "title": "Terminal Workspaces: Add Folder",
         "icon": "$(add)"
       },
       {
-        "command": "terminalTasksManager.addCurrentFileFolder",
-        "title": "Terminal Tasks Manager: Add Task",
+        "command": "terminalWorkspaces.addCurrentFileFolder",
+        "title": "Terminal Workspaces: Add Task",
         "icon": "$(add)"
       },
       {
-        "command": "terminalTasksManager.addBrowseFolder",
-        "title": "Terminal Tasks Manager: Browse for Folder",
+        "command": "terminalWorkspaces.addBrowseFolder",
+        "title": "Terminal Workspaces: Browse for Folder",
         "icon": "$(folder-opened)"
       },
       {
-        "command": "terminalTasksManager.addTaskFolder",
-        "title": "Terminal Tasks Manager: Create Folder",
+        "command": "terminalWorkspaces.addTaskFolder",
+        "title": "Terminal Workspaces: Create Folder",
         "icon": "$(new-folder)"
       },
       {
-        "command": "terminalTasksManager.runTask",
+        "command": "terminalWorkspaces.runTask",
         "title": "Run Terminal",
         "icon": "$(play)"
       },
       {
-        "command": "terminalTasksManager.runFolderTasks",
+        "command": "terminalWorkspaces.runFolderTasks",
         "title": "Run All Terminals in Folder",
         "icon": "$(run-all)"
       },
       {
-        "command": "terminalTasksManager.runTaskById",
+        "command": "terminalWorkspaces.runTaskById",
         "title": "Run Terminal by ID"
       },
       {
-        "command": "terminalTasksManager.runAllTasks",
-        "title": "Terminal Tasks Manager: Run All Terminals",
+        "command": "terminalWorkspaces.runAllTasks",
+        "title": "Terminal Workspaces: Run All Terminals",
         "icon": "$(run-all)"
       },
       {
-        "command": "terminalTasksManager.attachAllSessions",
+        "command": "terminalWorkspaces.attachAllSessions",
         "title": "Attach All Sessions",
         "icon": "$(run-all)"
       },
       {
-        "command": "terminalTasksManager.openSettings",
-        "title": "Terminal Tasks Manager: Open Settings",
+        "command": "terminalWorkspaces.openSettings",
+        "title": "Terminal Workspaces: Open Settings",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "terminalTasksManager.editTask",
+        "command": "terminalWorkspaces.editTask",
         "title": "Edit Task",
         "icon": "$(settings-gear)"
       },
       {
-        "command": "terminalTasksManager.rename",
+        "command": "terminalWorkspaces.rename",
         "title": "Rename",
         "icon": "$(edit)"
       },
       {
-        "command": "terminalTasksManager.delete",
+        "command": "terminalWorkspaces.delete",
         "title": "Delete",
         "icon": "$(trash)"
       },
       {
-        "command": "terminalTasksManager.moveToFolder",
+        "command": "terminalWorkspaces.moveToFolder",
         "title": "Move to Folder",
         "icon": "$(move)"
       },
       {
-        "command": "terminalTasksManager.openConfig",
-        "title": "Terminal Tasks Manager: Open Config File",
+        "command": "terminalWorkspaces.openConfig",
+        "title": "Terminal Workspaces: Open Config File",
         "icon": "$(json)"
       },
       {
-        "command": "terminalTasksManager.openTasksJson",
-        "title": "Terminal Tasks Manager: Open tasks.json",
+        "command": "terminalWorkspaces.openTasksJson",
+        "title": "Terminal Workspaces: Open tasks.json",
         "icon": "$(json)"
       },
       {
-        "command": "terminalTasksManager.regenerateTasksJson",
-        "title": "Terminal Tasks Manager: Regenerate tasks.json",
+        "command": "terminalWorkspaces.regenerateTasksJson",
+        "title": "Terminal Workspaces: Regenerate tasks.json",
         "icon": "$(sync)"
       },
       {
-        "command": "terminalTasksManager.openTasksManager",
-        "title": "Terminal Tasks Manager: Quick Open"
+        "command": "terminalWorkspaces.openTasksManager",
+        "title": "Terminal Workspaces: Quick Open"
       },
       {
-        "command": "terminalTasksManager.searchTasks",
-        "title": "Terminal Tasks Manager: Search",
+        "command": "terminalWorkspaces.searchTasks",
+        "title": "Terminal Workspaces: Search",
         "icon": "$(search)"
       },
       {
-        "command": "terminalTasksManager.refreshTmuxSessions",
-        "title": "Terminal Tasks Manager: Refresh tmux Sessions",
+        "command": "terminalWorkspaces.refreshTmuxSessions",
+        "title": "Terminal Workspaces: Refresh tmux Sessions",
         "icon": "$(sync)"
       },
       {
-        "command": "terminalTasksManager.importTmuxSessions",
-        "title": "Terminal Tasks Manager: Import tmux Sessions",
+        "command": "terminalWorkspaces.importTmuxSessions",
+        "title": "Terminal Workspaces: Import tmux Sessions",
         "icon": "$(cloud-download)"
       },
       {
-        "command": "terminalTasksManager.attachTmuxSession",
+        "command": "terminalWorkspaces.attachTmuxSession",
         "title": "Attach to Session",
         "icon": "$(debug-start)"
       },
       {
-        "command": "terminalTasksManager.importTmuxSession",
+        "command": "terminalWorkspaces.importTmuxSession",
         "title": "Import as Task",
         "icon": "$(add)"
       },
       {
-        "command": "terminalTasksManager.addFileParentFolder",
-        "title": "Terminal Tasks Manager: Add File's Folder",
+        "command": "terminalWorkspaces.addFileParentFolder",
+        "title": "Terminal Workspaces: Add File's Folder",
         "icon": "$(add)"
       },
       {
-        "command": "terminalTasksManager.addFromTerminal",
-        "title": "Terminal Tasks Manager: Add Task",
+        "command": "terminalWorkspaces.addFromTerminal",
+        "title": "Terminal Workspaces: Add Task",
         "icon": "$(add)"
       }
     ],
     "menus": {
       "explorer/context": [
         {
-          "command": "terminalTasksManager.addFolderToTasks",
+          "command": "terminalWorkspaces.addFolderToTasks",
           "when": "explorerResourceIsFolder",
           "group": "navigation@100"
         },
         {
-          "command": "terminalTasksManager.addFileParentFolder",
+          "command": "terminalWorkspaces.addFileParentFolder",
           "when": "!explorerResourceIsFolder",
           "group": "navigation@100"
         }
       ],
       "terminal/context": [
         {
-          "command": "terminalTasksManager.addFromTerminal",
+          "command": "terminalWorkspaces.addFromTerminal",
           "group": "navigation@100"
         }
       ],
       "terminal/title/context": [
         {
-          "command": "terminalTasksManager.addFromTerminal",
+          "command": "terminalWorkspaces.addFromTerminal",
           "group": "navigation@100"
         }
       ],
       "view/title": [
         {
-          "command": "terminalTasksManager.runAllTasks",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.runAllTasks",
+          "when": "view == terminalWorkspacesView",
           "group": "navigation@1"
         },
         {
-          "command": "terminalTasksManager.searchTasks",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.searchTasks",
+          "when": "view == terminalWorkspacesView",
           "group": "navigation@2"
         },
         {
-          "command": "terminalTasksManager.addCurrentFileFolder",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.addCurrentFileFolder",
+          "when": "view == terminalWorkspacesView",
           "group": "navigation@3"
         },
         {
-          "command": "terminalTasksManager.addTaskFolder",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.addTaskFolder",
+          "when": "view == terminalWorkspacesView",
           "group": "navigation@4"
         },
         {
-          "command": "terminalTasksManager.refresh",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.refresh",
+          "when": "view == terminalWorkspacesView",
           "group": "navigation@5"
         },
         {
-          "command": "terminalTasksManager.addBrowseFolder",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.addBrowseFolder",
+          "when": "view == terminalWorkspacesView",
           "group": "overflow@1"
         },
         {
-          "command": "terminalTasksManager.openConfig",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.openConfig",
+          "when": "view == terminalWorkspacesView",
           "group": "overflow@2"
         },
         {
-          "command": "terminalTasksManager.openTasksJson",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.openTasksJson",
+          "when": "view == terminalWorkspacesView",
           "group": "overflow@3"
         },
         {
-          "command": "terminalTasksManager.regenerateTasksJson",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.regenerateTasksJson",
+          "when": "view == terminalWorkspacesView",
           "group": "overflow@4"
         },
         {
-          "command": "terminalTasksManager.importTmuxSessions",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.importTmuxSessions",
+          "when": "view == terminalWorkspacesView",
           "group": "overflow@5"
         },
         {
-          "command": "terminalTasksManager.openSettings",
-          "when": "view == terminalTasksView",
+          "command": "terminalWorkspaces.openSettings",
+          "when": "view == terminalWorkspacesView",
           "group": "overflow@6"
         }
       ],
       "view/item/context": [
         {
-          "command": "terminalTasksManager.runTask",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.runTask",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "inline@1"
         },
         {
-          "command": "terminalTasksManager.editTask",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.editTask",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "inline@2"
         },
         {
-          "command": "terminalTasksManager.delete",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.delete",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "inline@3"
         },
         {
-          "command": "terminalTasksManager.runFolderTasks",
-          "when": "view == terminalTasksView && viewItem == taskFolderWithChildren",
+          "command": "terminalWorkspaces.runFolderTasks",
+          "when": "view == terminalWorkspacesView && viewItem == taskFolderWithChildren",
           "group": "inline@1"
         },
         {
-          "command": "terminalTasksManager.addTaskFolder",
-          "when": "view == terminalTasksView && viewItem =~ /^taskFolder/",
+          "command": "terminalWorkspaces.addTaskFolder",
+          "when": "view == terminalWorkspacesView && viewItem =~ /^taskFolder/",
           "group": "inline@2"
         },
         {
-          "command": "terminalTasksManager.delete",
-          "when": "view == terminalTasksView && viewItem =~ /^taskFolder/",
+          "command": "terminalWorkspaces.delete",
+          "when": "view == terminalWorkspacesView && viewItem =~ /^taskFolder/",
           "group": "inline@3"
         },
         {
-          "command": "terminalTasksManager.runTask",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.runTask",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "1_run@1"
         },
         {
-          "command": "terminalTasksManager.editTask",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.editTask",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "2_edit@1"
         },
         {
-          "command": "terminalTasksManager.rename",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.rename",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "2_edit@2"
         },
         {
-          "command": "terminalTasksManager.moveToFolder",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.moveToFolder",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "2_edit@3"
         },
         {
-          "command": "terminalTasksManager.delete",
-          "when": "view == terminalTasksView && viewItem == terminalTask",
+          "command": "terminalWorkspaces.delete",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
           "group": "3_delete@1"
         },
         {
-          "command": "terminalTasksManager.runFolderTasks",
-          "when": "view == terminalTasksView && viewItem == taskFolderWithChildren",
+          "command": "terminalWorkspaces.runFolderTasks",
+          "when": "view == terminalWorkspacesView && viewItem == taskFolderWithChildren",
           "group": "1_run@1"
         },
         {
-          "command": "terminalTasksManager.addTaskFolder",
-          "when": "view == terminalTasksView && viewItem =~ /^taskFolder/",
+          "command": "terminalWorkspaces.addTaskFolder",
+          "when": "view == terminalWorkspacesView && viewItem =~ /^taskFolder/",
           "group": "2_add@1"
         },
         {
-          "command": "terminalTasksManager.rename",
-          "when": "view == terminalTasksView && viewItem =~ /^taskFolder/",
+          "command": "terminalWorkspaces.rename",
+          "when": "view == terminalWorkspacesView && viewItem =~ /^taskFolder/",
           "group": "2_edit@1"
         },
         {
-          "command": "terminalTasksManager.moveToFolder",
-          "when": "view == terminalTasksView && viewItem =~ /^taskFolder/",
+          "command": "terminalWorkspaces.moveToFolder",
+          "when": "view == terminalWorkspacesView && viewItem =~ /^taskFolder/",
           "group": "2_edit@2"
         },
         {
-          "command": "terminalTasksManager.delete",
-          "when": "view == terminalTasksView && viewItem =~ /^taskFolder/",
+          "command": "terminalWorkspaces.delete",
+          "when": "view == terminalWorkspacesView && viewItem =~ /^taskFolder/",
           "group": "3_delete@1"
         },
         {
-          "command": "terminalTasksManager.attachAllSessions",
-          "when": "view == terminalTasksView && viewItem == tmuxSessionsHeader",
+          "command": "terminalWorkspaces.attachAllSessions",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSessionsHeader",
           "group": "inline@1"
         },
         {
-          "command": "terminalTasksManager.refreshTmuxSessions",
-          "when": "view == terminalTasksView && viewItem == tmuxSessionsHeader",
+          "command": "terminalWorkspaces.refreshTmuxSessions",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSessionsHeader",
           "group": "inline@2"
         },
         {
-          "command": "terminalTasksManager.attachAllSessions",
-          "when": "view == terminalTasksView && viewItem == tmuxSessionsHeader",
+          "command": "terminalWorkspaces.attachAllSessions",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSessionsHeader",
           "group": "1_attach@1"
         },
         {
-          "command": "terminalTasksManager.refreshTmuxSessions",
-          "when": "view == terminalTasksView && viewItem == tmuxSessionsHeader",
+          "command": "terminalWorkspaces.refreshTmuxSessions",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSessionsHeader",
           "group": "2_refresh@1"
         },
         {
-          "command": "terminalTasksManager.attachTmuxSession",
-          "when": "view == terminalTasksView && viewItem == tmuxSession",
+          "command": "terminalWorkspaces.attachTmuxSession",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSession",
           "group": "inline@1"
         },
         {
-          "command": "terminalTasksManager.importTmuxSession",
-          "when": "view == terminalTasksView && viewItem == tmuxSession",
+          "command": "terminalWorkspaces.importTmuxSession",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSession",
           "group": "inline@2"
         },
         {
-          "command": "terminalTasksManager.attachTmuxSession",
-          "when": "view == terminalTasksView && viewItem == tmuxSession",
+          "command": "terminalWorkspaces.attachTmuxSession",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSession",
           "group": "1_attach@1"
         },
         {
-          "command": "terminalTasksManager.importTmuxSession",
-          "when": "view == terminalTasksView && viewItem == tmuxSession",
+          "command": "terminalWorkspaces.importTmuxSession",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSession",
           "group": "2_import@1"
         }
       ]
     },
     "keybindings": [
       {
-        "command": "terminalTasksManager.runAllTasks",
+        "command": "terminalWorkspaces.runAllTasks",
         "key": "ctrl+shift+alt+t",
         "mac": "cmd+shift+alt+t"
       },
       {
-        "command": "terminalTasksManager.addCurrentFileFolder",
+        "command": "terminalWorkspaces.addCurrentFileFolder",
         "key": "ctrl+shift+alt+a",
         "mac": "cmd+shift+alt+a"
       },
       {
-        "command": "terminalTasksManager.openTasksManager",
+        "command": "terminalWorkspaces.openTasksManager",
         "key": "ctrl+shift+alt+o",
         "mac": "cmd+shift+alt+o"
       }
     ],
     "configuration": {
-      "title": "Terminal Tasks Manager",
+      "title": "Terminal Workspaces",
       "properties": {
-        "terminalTasksManager.defaultProfile": {
+        "terminalWorkspaces.defaultProfile": {
           "type": "string",
           "default": "wsl-default",
           "enum": [
@@ -442,27 +442,27 @@
           ],
           "description": "Default profile to use when creating new terminal tasks"
         },
-        "terminalTasksManager.autoGenerateTasksJson": {
+        "terminalWorkspaces.autoGenerateTasksJson": {
           "type": "boolean",
           "default": true,
-          "description": "Automatically regenerate tasks.json when terminal-tasks.json changes"
+          "description": "Automatically regenerate tasks.json when terminal-workspaces.json changes"
         },
-        "terminalTasksManager.groupTaskLabel": {
+        "terminalWorkspaces.groupTaskLabel": {
           "type": "string",
           "default": "Open All Terminals",
           "description": "Label for the group task that runs all terminal tasks"
         },
-        "terminalTasksManager.createGroupTask": {
+        "terminalWorkspaces.createGroupTask": {
           "type": "boolean",
           "default": true,
           "description": "Create a group task that opens all terminals at once"
         },
-        "terminalTasksManager.tmuxClickToAttach": {
+        "terminalWorkspaces.tmuxClickToAttach": {
           "type": "boolean",
           "default": false,
           "description": "Click on untracked tmux sessions to attach immediately (if disabled, clicking shows session info)"
         },
-        "terminalTasksManager.experimentalPathValidation": {
+        "terminalWorkspaces.experimentalPathValidation": {
           "type": "boolean",
           "default": false,
           "markdownDescription": "**[Experimental]** Validate task paths before running. If a path doesn't exist, prompts to update or browse for a new location."

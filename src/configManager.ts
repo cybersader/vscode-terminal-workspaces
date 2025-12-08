@@ -24,7 +24,7 @@ export class ConfigManager {
         if (!folders || folders.length === 0) {
             return undefined;
         }
-        return path.join(folders[0].uri.fsPath, '.vscode', 'terminal-tasks.json');
+        return path.join(folders[0].uri.fsPath, '.vscode', 'terminal-workspaces.json');
     }
 
     /**
@@ -54,7 +54,7 @@ export class ConfigManager {
             this.config = JSON.parse(content);
             return this.config!;
         } catch (error) {
-            console.error('Failed to load terminal-tasks.json:', error);
+            console.error('Failed to load terminal-workspaces.json:', error);
             this.config = { ...DEFAULT_CONFIG };
             return this.config;
         }
