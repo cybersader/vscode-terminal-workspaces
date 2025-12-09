@@ -12,12 +12,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/cybersader/vscode-terminal-tasks-manager"
+    "url": "https://github.com/cybersader/vscode-terminal-workspaces"
   },
   "bugs": {
-    "url": "https://github.com/cybersader/vscode-terminal-tasks-manager/issues"
+    "url": "https://github.com/cybersader/vscode-terminal-workspaces/issues"
   },
-  "homepage": "https://github.com/cybersader/vscode-terminal-tasks-manager#readme",
+  "homepage": "https://github.com/cybersader/vscode-terminal-workspaces#readme",
   "engines": {
     "vscode": "^1.85.0"
   },
