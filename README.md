@@ -133,6 +133,32 @@ The ultimate setup for coding anywhere with full session persistence:
 
 Your AI agents keep working. Your sessions never die. Code from anywhere.
 
+### VS Code Terminal Layout Tips
+
+VS Code's bottom panel only splits horizontally. For complex terminal layouts:
+
+| Action | How |
+|--------|-----|
+| Split terminal side-by-side | `Ctrl+Shift+5` or click split icon |
+| **Move terminal to editor area** | Right-click tab → "Move to Editor Area" (enables 2D grid layouts) |
+| Focus between panes | `Alt+Arrow` keys |
+| Rename terminal | Right-click tab → "Rename" |
+| Secondary side panel | View → Appearance → Secondary Side Bar (drag terminals there) |
+
+**Pro tip:** For full grid layouts with terminals, move them to the editor area. You lose "always at bottom" but gain the ability to split in any direction.
+
+### Companion Extensions
+
+These extensions pair well with Terminal Workspaces:
+
+| Extension | Why |
+|-----------|-----|
+| **[Project Manager](https://marketplace.visualstudio.com/items?itemName=alefragnani.project-manager)** | Quick-switch between projects. Combine with multi-root workspaces to have multiple project folders + their terminals open together. |
+| **[Multi-command](https://marketplace.visualstudio.com/items?itemName=ryuta46.multi-command)** | Chain commands together - e.g., open project + run all terminals in one keybinding. |
+| **[Terminal Paste Image](https://marketplace.visualstudio.com/items?itemName=nickmillerdev.terminal-paste-image)** | Paste images directly into terminals - handy for AI coding agents that accept image input. |
+
+**Multi-root workspace tip:** File → Add Folder to Workspace lets you have multiple project folders in the sidebar at once. Each can have its own `terminal-workspaces.json` config.
+
 ## License
 
 MIT

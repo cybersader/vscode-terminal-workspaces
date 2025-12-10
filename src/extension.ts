@@ -1083,6 +1083,37 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // =========================================================================
+    // REVEAL IN EXPLORER
+    // =========================================================================
+
+    const revealInExplorerCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.revealInExplorer',
+        async (element: any) => {
+            if (!element?.itemData?.path) {
+                vscode.window.showErrorMessage('No path available for this item');
+                return;
+            }
+
+            const taskPath = element.itemData.path;
+
+            // Convert WSL path to Windows path if needed
+            let revealPath = taskPath;
+            if (process.platform === 'win32' && taskPath.startsWith('/mnt/')) {
+                const match = taskPath.match(/^\/mnt\/([a-z])\/(.*)/i);
+                if (match) {
+                    revealPath = `${match[1].toUpperCase()}:\\${match[2].replace(/\//g, '\\')}`;
+                }
+            }
+
+            try {
+                await vscode.commands.executeCommand('revealFileInOS', vscode.Uri.file(revealPath));
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to reveal folder: ${error}`);
+            }
+        }
+    );
+
+    // =========================================================================
     // OPEN SETTINGS
     // =========================================================================
 
@@ -1091,7 +1122,7 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
             await vscode.commands.executeCommand(
                 'workbench.action.openSettings',
-                '@ext:cybersader.terminal-tasks-manager'
+                '@ext:cybersader.terminal-workspaces'
             );
         }
     );
@@ -1140,6 +1171,7 @@ export function activate(context: vscode.ExtensionContext) {
         regenerateTasksJsonCommand,
         openManagerCommand,
         openSettingsCommand,
+        revealInExplorerCommand,
         searchTasksCommand,
         refreshTmuxSessionsCommand,
         importTmuxSessionsCommand,
