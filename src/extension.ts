@@ -126,6 +126,15 @@ export function activate(context: vscode.ExtensionContext) {
         canSelectMany: false
     });
 
+    // Listen for terminal open/close events to update active status indicators
+    const terminalOpenListener = vscode.window.onDidOpenTerminal(() => {
+        treeDataProvider.refresh();
+    });
+    const terminalCloseListener = vscode.window.onDidCloseTerminal(() => {
+        treeDataProvider.refresh();
+    });
+    context.subscriptions.push(terminalOpenListener, terminalCloseListener);
+
     // =========================================================================
     // REFRESH
     // =========================================================================
@@ -451,6 +460,45 @@ export function activate(context: vscode.ExtensionContext) {
     // RUN TASK
     // =========================================================================
 
+    // Helper to run a task, respecting terminal location setting
+    const runTaskDirectly = async (task: TerminalTaskItem) => {
+        const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
+
+        if (terminalLocation === 'editor') {
+            // Create terminal directly in editor area
+            // Don't set shellPath/shellArgs - use default shell and send command via sendText
+            // This prevents the shell from exiting immediately (which happens with cmd.exe /C)
+            const generated = configManager.generateTaskCommand(task);
+
+            const terminal = vscode.window.createTerminal({
+                name: task.name,
+                location: vscode.TerminalLocation.Editor
+            });
+            terminal.show();
+
+            // Build the full command including shell wrapper if needed
+            let fullCommand = generated.command;
+            if (generated.shellOptions?.executable) {
+                const shell = generated.shellOptions.executable;
+                const args = generated.shellOptions.args?.join(' ') || '';
+
+                if (shell.toLowerCase().includes('cmd.exe')) {
+                    // For cmd.exe, use /K instead of /C to keep the shell open
+                    // But actually, we should just send the WSL command directly
+                    // since the default VS Code terminal on Windows can run wsl.exe
+                    // The command already includes wsl.exe when needed
+                } else if (shell.toLowerCase().includes('powershell')) {
+                    // PowerShell commands can be sent directly
+                }
+            }
+
+            terminal.sendText(fullCommand);
+        } else {
+            // Use VS Code task system for panel
+            await vscode.commands.executeCommand('workbench.action.tasks.runTask', task.name);
+        }
+    };
+
     const runTaskByIdCommand = vscode.commands.registerCommand(
         'terminalWorkspaces.runTaskById',
         async (taskId: string) => {
@@ -473,7 +521,7 @@ export function activate(context: vscode.ExtensionContext) {
                 await configManager.generateTasksJson();
             }
 
-            await vscode.commands.executeCommand('workbench.action.tasks.runTask', validatedTask.name);
+            await runTaskDirectly(validatedTask);
         }
     );
 
@@ -487,9 +535,15 @@ export function activate(context: vscode.ExtensionContext) {
             if (item.itemData.type === 'folder') {
                 // Run all tasks in this folder
                 const folder = item.itemData as TaskFolder;
-                const taskNames = getAllTaskNames(folder.children);
-                for (const name of taskNames) {
-                    await vscode.commands.executeCommand('workbench.action.tasks.runTask', name);
+                const allTasks = getAllTasks(folder.children);
+                for (const task of allTasks) {
+                    const validatedTask = await validateTaskPath(task);
+                    if (validatedTask) {
+                        if (validatedTask.path !== task.path) {
+                            await configManager.generateTasksJson();
+                        }
+                        await runTaskDirectly(validatedTask);
+                    }
                 }
             } else if (item.itemData.type === 'task') {
                 const task = item.itemData as TerminalTaskItem;
@@ -505,7 +559,7 @@ export function activate(context: vscode.ExtensionContext) {
                     await configManager.generateTasksJson();
                 }
 
-                await vscode.commands.executeCommand('workbench.action.tasks.runTask', validatedTask.name);
+                await runTaskDirectly(validatedTask);
             }
         }
     );
@@ -513,11 +567,28 @@ export function activate(context: vscode.ExtensionContext) {
     const runAllTasksCommand = vscode.commands.registerCommand(
         'terminalWorkspaces.runAllTasks',
         async () => {
+            const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
             const config = await configManager.getConfig();
-            await vscode.commands.executeCommand(
-                'workbench.action.tasks.runTask',
-                config.settings.groupTaskLabel
-            );
+
+            if (terminalLocation === 'editor') {
+                // Run all tasks directly for editor location
+                const allTasks = getAllTasks(config.items);
+                for (const task of allTasks) {
+                    const validatedTask = await validateTaskPath(task);
+                    if (validatedTask) {
+                        if (validatedTask.path !== task.path) {
+                            await configManager.generateTasksJson();
+                        }
+                        await runTaskDirectly(validatedTask);
+                    }
+                }
+            } else {
+                // Use group task for panel
+                await vscode.commands.executeCommand(
+                    'workbench.action.tasks.runTask',
+                    config.settings.groupTaskLabel
+                );
+            }
         }
     );
 
@@ -529,15 +600,21 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             const folder = item.itemData as TaskFolder;
-            const taskNames = getAllTaskNames(folder.children);
+            const allTasks = getAllTasks(folder.children);
 
-            if (taskNames.length === 0) {
+            if (allTasks.length === 0) {
                 vscode.window.showInformationMessage('No tasks in this folder');
                 return;
             }
 
-            for (const name of taskNames) {
-                await vscode.commands.executeCommand('workbench.action.tasks.runTask', name);
+            for (const task of allTasks) {
+                const validatedTask = await validateTaskPath(task);
+                if (validatedTask) {
+                    if (validatedTask.path !== task.path) {
+                        await configManager.generateTasksJson();
+                    }
+                    await runTaskDirectly(validatedTask);
+                }
             }
         }
     );
@@ -1202,6 +1279,19 @@ function getAllTaskNames(items: (TerminalTaskItem | TaskFolder)[]): string[] {
         }
     }
     return names;
+}
+
+// Helper: Get all tasks from items recursively
+function getAllTasks(items: (TerminalTaskItem | TaskFolder)[]): TerminalTaskItem[] {
+    const tasks: TerminalTaskItem[] = [];
+    for (const item of items) {
+        if (item.type === 'task') {
+            tasks.push(item);
+        } else if (item.type === 'folder') {
+            tasks.push(...getAllTasks(item.children));
+        }
+    }
+    return tasks;
 }
 
 export function deactivate() {}

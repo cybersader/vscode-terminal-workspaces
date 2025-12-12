@@ -470,8 +470,16 @@ export class ConfigManager {
     }
 
     /**
-     * Generate the shell command for a task
+     * Generate the shell command and options for a task
+     * Made public so extension can create terminals directly for editor location
      */
+    public generateTaskCommand(task: TerminalTaskItem): { command: string; shellOptions?: { executable?: string; args?: string[] } } {
+        const config = this.config!;
+        const profile = this.getProfile(task.profileId || config.defaultProfileId) || BUILTIN_PROFILES[0];
+        const merged = this.mergeProfileWithOverrides(profile, task.overrides);
+        return this.generateCommand(task.path, task.name, merged);
+    }
+
     private generateCommand(folderPath: string, taskName: string, profile: Profile): { command: string; shellOptions?: { executable?: string; args?: string[] } } {
         const wslPath = this.toWslPath(folderPath);
         const windowsPath = this.toWindowsPath(folderPath);

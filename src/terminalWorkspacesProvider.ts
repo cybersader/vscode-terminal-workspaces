@@ -69,7 +69,7 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         // Children of a folder
         if (element.itemData?.type === 'folder') {
             const folder = element.itemData as TaskFolder;
-            return this.itemsToTreeItems(folder.children);
+            return this.itemsToTreeItems(folder.children, true);
         }
 
         return [];
@@ -101,17 +101,43 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         return null;
     }
 
-    private itemsToTreeItems(items: TaskItem[]): TaskTreeItem[] {
+    /**
+     * Check if there's an active terminal matching the task name
+     */
+    private isTerminalActive(taskName: string): boolean {
+        const terminals = vscode.window.terminals;
+        return terminals.some(terminal => {
+            // Match exact name or "Task: name" format from VS Code tasks
+            const terminalName = terminal.name;
+            return terminalName === taskName ||
+                   terminalName === `Task - ${taskName}` ||
+                   terminalName === `tmux: ${taskName}` ||
+                   terminalName.startsWith(`${taskName} `);
+        });
+    }
+
+    /**
+     * Check if there's an active terminal for a tmux session
+     */
+    private isTmuxTerminalActive(sessionName: string): boolean {
+        const terminals = vscode.window.terminals;
+        return terminals.some(terminal => {
+            const terminalName = terminal.name;
+            return terminalName === `tmux: ${sessionName}`;
+        });
+    }
+
+    private itemsToTreeItems(items: TaskItem[], isChild: boolean = false): TaskTreeItem[] {
         return items.map(item => {
             if (item.type === 'folder') {
-                return this.createFolderItem(item);
+                return this.createFolderItem(item, isChild);
             } else {
-                return this.createTaskItem(item);
+                return this.createTaskItem(item, isChild);
             }
         });
     }
 
-    private createFolderItem(folder: TaskFolder): TaskTreeItem {
+    private createFolderItem(folder: TaskFolder, isChild: boolean = false): TaskTreeItem {
         const item = new TaskTreeItem(
             folder.name,
             folder.expanded !== false
@@ -122,8 +148,8 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
         // Set unique ID to preserve expansion state across refreshes
         item.id = `folder-${folder.id}`;
-        // Use folder icon with a subtle color tint
-        item.iconPath = new vscode.ThemeIcon('folder', new vscode.ThemeColor('terminal.ansiBlue'));
+        // Use symbol-folder icon - narrower than 'folder' for consistent alignment
+        item.iconPath = new vscode.ThemeIcon('archive', new vscode.ThemeColor('terminal.ansiBlue'));
         // Use different context values for empty vs non-empty folders
         // This allows us to hide "Run All" on empty folders
         const hasChildren = folder.children.length > 0;
@@ -137,7 +163,7 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         return item;
     }
 
-    private createTaskItem(task: TerminalTaskItem): TaskTreeItem {
+    private createTaskItem(task: TerminalTaskItem, isChild: boolean = false): TaskTreeItem {
         const item = new TaskTreeItem(
             task.name,
             vscode.TreeItemCollapsibleState.None,
@@ -149,9 +175,16 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
         // Get the profile for this task
         const profile = this.configManager.getProfile(task.profileId || 'wsl-default');
-        const iconName = profile?.icon || task.overrides?.icon || 'terminal';
 
-        item.iconPath = new vscode.ThemeIcon(iconName);
+        // Check if there's an active terminal for this task
+        const isActive = this.isTerminalActive(task.name);
+
+        // Use circle-filled for consistent alignment with tmux sessions
+        // Green when terminal is active, grey when inactive
+        const iconColor = isActive
+            ? new vscode.ThemeColor('terminal.ansiGreen')
+            : new vscode.ThemeColor('disabledForeground');
+        item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
         item.contextValue = 'terminalTask';
         item.description = this.shortenPath(task.path);
         item.tooltip = this.buildTaskTooltip(task, profile);
@@ -209,7 +242,13 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
         // Set unique ID to preserve state across refreshes
         item.id = `tmux-session-${session.name}`;
-        item.iconPath = new vscode.ThemeIcon(session.attached ? 'broadcast' : 'circle-outline');
+
+        // Check if there's an active terminal attached to this tmux session
+        const isActive = this.isTerminalActive(session.name) || this.isTmuxTerminalActive(session.name);
+        const iconColor = isActive
+            ? new vscode.ThemeColor('terminal.ansiGreen')
+            : new vscode.ThemeColor('disabledForeground');
+        item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
         item.contextValue = 'tmuxSession';
         item.description = TmuxManager.normalizePathForDisplay(session.path);
         item.tooltip = [
