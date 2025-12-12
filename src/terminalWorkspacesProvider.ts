@@ -120,7 +120,10 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             folder
         );
 
-        item.iconPath = new vscode.ThemeIcon('folder');
+        // Set unique ID to preserve expansion state across refreshes
+        item.id = `folder-${folder.id}`;
+        // Use folder icon with a subtle color tint
+        item.iconPath = new vscode.ThemeIcon('folder', new vscode.ThemeColor('terminal.ansiBlue'));
         // Use different context values for empty vs non-empty folders
         // This allows us to hide "Run All" on empty folders
         const hasChildren = folder.children.length > 0;
@@ -140,6 +143,9 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             vscode.TreeItemCollapsibleState.None,
             task
         );
+
+        // Set unique ID to preserve state across refreshes
+        item.id = `task-${task.id}`;
 
         // Get the profile for this task
         const profile = this.configManager.getProfile(task.profileId || 'wsl-default');
@@ -183,7 +189,10 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             { type: 'tmuxSessionsHeader' } as TmuxSessionsHeader
         );
 
-        item.iconPath = new vscode.ThemeIcon('broadcast');
+        // Set unique ID to preserve expansion state
+        item.id = 'tmux-sessions-header';
+        // Use a distinct icon with color to differentiate from regular folders
+        item.iconPath = new vscode.ThemeIcon('broadcast', new vscode.ThemeColor('terminal.ansiYellow'));
         item.contextValue = 'tmuxSessionsHeader';
         item.tooltip = `${count} tmux session(s) not linked to tasks.\nClick to expand, then import sessions as tasks.`;
         item.description = 'tmux';
@@ -198,6 +207,8 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             { type: 'tmuxSession', session } as TmuxSessionData
         );
 
+        // Set unique ID to preserve state across refreshes
+        item.id = `tmux-session-${session.name}`;
         item.iconPath = new vscode.ThemeIcon(session.attached ? 'broadcast' : 'circle-outline');
         item.contextValue = 'tmuxSession';
         item.description = TmuxManager.normalizePathForDisplay(session.path);

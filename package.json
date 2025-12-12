@@ -476,6 +476,16 @@
           "type": "boolean",
           "default": false,
           "markdownDescription": "**[Experimental]** Validate task paths before running. If a path doesn't exist, prompts to update or browse for a new location."
+        },
+        "terminalWorkspaces.terminalLocation": {
+          "type": "string",
+          "default": "panel",
+          "enum": ["panel", "editor"],
+          "enumDescriptions": [
+            "Open terminals in the bottom panel (default VS Code behavior)",
+            "Open terminals in the editor area (enables 2D grid layouts)"
+          ],
+          "markdownDescription": "Where to open new terminals. **Note:** Currently only affects tmux session attach operations. Regular task terminals use VS Code's built-in task system which defaults to the panel."
         }
       }
     }
