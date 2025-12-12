@@ -21,10 +21,12 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 ## Features
 
 - **Visual Sidebar** - Manage all terminal tasks from a dedicated tree view
+- **Active Status Indicators** - Green dot when terminal is open, grey when inactive
 - **Right-Click Integration** - Add folders from Explorer, files, or terminals
 - **Nested Organization** - Group tasks into folders for better organization
 - **Terminal Profiles** - WSL, tmux, PowerShell, CMD, bash with customizable settings
 - **tmux Integration** - Attach-or-create sessions, discover untracked sessions
+- **Editor Area Terminals** - Open terminals in the editor area for 2D grid layouts
 - **Quick Search** - Find and run tasks instantly with fuzzy search
 - **Path Validation** - Experimental feature to detect and fix broken paths
 
@@ -63,6 +65,9 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 {
   // Default terminal profile
   "terminalWorkspaces.defaultProfile": "wsl-tmux",
+
+  // Open terminals in editor area (enables 2D grid layouts) or panel
+  "terminalWorkspaces.terminalLocation": "editor", // or "panel" (default)
 
   // Auto-generate tasks.json from terminal-workspaces.json
   "terminalWorkspaces.autoGenerateTasksJson": true,
@@ -140,12 +145,13 @@ VS Code's bottom panel only splits horizontally. For complex terminal layouts:
 | Action | How |
 |--------|-----|
 | Split terminal side-by-side | `Ctrl+Shift+5` or click split icon |
-| **Move terminal to editor area** | Right-click tab → "Move to Editor Area" (enables 2D grid layouts) |
+| **Open terminals in editor area** | Set `terminalWorkspaces.terminalLocation` to `"editor"` (enables 2D grid layouts) |
+| Move existing terminal to editor | Right-click tab → "Move to Editor Area" |
 | Focus between panes | `Alt+Arrow` keys |
 | Rename terminal | Right-click tab → "Rename" |
 | Secondary side panel | View → Appearance → Secondary Side Bar (drag terminals there) |
 
-**Pro tip:** For full grid layouts with terminals, move them to the editor area. You lose "always at bottom" but gain the ability to split in any direction.
+**Pro tip:** Set `terminalLocation` to `"editor"` for full grid layouts. You lose "always at bottom" but gain the ability to split in any direction.
 
 ### Companion Extensions
 
