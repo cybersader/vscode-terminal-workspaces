@@ -936,9 +936,13 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Create terminal - don't set cwd since tmux will handle the working directory
             // The session's path might not exist on the Windows side or could be invalid
+            const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
             const terminal = vscode.window.createTerminal({
-                name: `tmux: ${session.name}`
+                name: `tmux: ${session.name}`,
                 // Intentionally not setting cwd - tmux attach will restore the session's directory
+                location: terminalLocation === 'editor'
+                    ? vscode.TerminalLocation.Editor
+                    : vscode.TerminalLocation.Panel
             });
 
             terminal.show();
@@ -1063,10 +1067,15 @@ export function activate(context: vscode.ExtensionContext) {
 
             const isRemoteWSL = vscode.env.remoteName === 'wsl';
 
+            const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
+
             for (const session of untrackedSessions) {
                 // Don't set cwd - tmux will restore the session's working directory
                 const terminal = vscode.window.createTerminal({
-                    name: `tmux: ${session.name}`
+                    name: `tmux: ${session.name}`,
+                    location: terminalLocation === 'editor'
+                        ? vscode.TerminalLocation.Editor
+                        : vscode.TerminalLocation.Panel
                 });
 
                 terminal.show(false); // Don't steal focus for subsequent terminals
