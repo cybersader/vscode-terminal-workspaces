@@ -2,7 +2,7 @@
   "name": "terminal-workspaces",
   "displayName": "Terminal Workspaces",
   "description": "Manage terminal sessions with a sidebar GUI. Supports WSL, tmux, PowerShell, nested folders, profiles, and more. Perfect for multi-project and agentic coding workflows.",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "publisher": "cybersader",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -186,6 +186,16 @@
         "icon": "$(add)"
       },
       {
+        "command": "terminalWorkspaces.killTmuxSession",
+        "title": "Kill Session",
+        "icon": "$(trash)"
+      },
+      {
+        "command": "terminalWorkspaces.killTmuxSessionFromTerminal",
+        "title": "Kill tmux Session",
+        "icon": "$(trash)"
+      },
+      {
         "command": "terminalWorkspaces.addFileParentFolder",
         "title": "Terminal Workspaces: Add File's Folder",
         "icon": "$(add)"
@@ -199,6 +209,11 @@
         "command": "terminalWorkspaces.revealInExplorer",
         "title": "Reveal in File Explorer",
         "icon": "$(folder-opened)"
+      },
+      {
+        "command": "terminalWorkspaces.revealInVSCodeExplorer",
+        "title": "Reveal in VS Code Explorer",
+        "icon": "$(file-submodule)"
       }
     ],
     "menus": {
@@ -224,6 +239,10 @@
         {
           "command": "terminalWorkspaces.addFromTerminal",
           "group": "navigation@100"
+        },
+        {
+          "command": "terminalWorkspaces.killTmuxSessionFromTerminal",
+          "group": "9_kill@1"
         }
       ],
       "view/title": [
@@ -345,6 +364,11 @@
           "group": "4_reveal@1"
         },
         {
+          "command": "terminalWorkspaces.revealInVSCodeExplorer",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "group": "4_reveal@2"
+        },
+        {
           "command": "terminalWorkspaces.runFolderTasks",
           "when": "view == terminalWorkspacesView && viewItem == taskFolderWithChildren",
           "group": "1_run@1"
@@ -408,6 +432,16 @@
           "command": "terminalWorkspaces.importTmuxSession",
           "when": "view == terminalWorkspacesView && viewItem == tmuxSession",
           "group": "2_import@1"
+        },
+        {
+          "command": "terminalWorkspaces.killTmuxSession",
+          "when": "view == terminalWorkspacesView && viewItem == tmuxSession",
+          "group": "3_kill@1"
+        },
+        {
+          "command": "terminalWorkspaces.killTmuxSession",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "group": "3_kill@1"
         }
       ]
     },
