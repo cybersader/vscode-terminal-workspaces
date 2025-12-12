@@ -5,6 +5,19 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.1] - 2024-12-12
+
+### Added
+
+- **Kill tmux Session from Terminal Tab** - Right-click terminal tabs in the panel to kill the associated tmux session
+- **Reveal in VS Code Explorer** - New context menu option to reveal task folders in the VS Code sidebar explorer
+- **SSH + tmux Setup Guide** - New documentation (`docs/ssh-tmux-setup.md`) with bash helpers for efficient tmux session management via SSH
+
+### Fixed
+
+- **Terminal Reuse** - Terminals opened in editor area now reuse existing tabs instead of creating duplicates with lock symbols
+- **Kill tmux from Terminal Tab** - Command now properly receives the clicked terminal instead of requiring it to be active
+
 ## [0.4.0] - 2024-12-12
 
 ### Added
@@ -94,6 +107,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.1 | 2024-12-12 | Kill tmux from terminal tab, reveal in explorer, SSH/tmux docs |
 | 0.4.0 | 2024-12-12 | Active terminal indicators, terminal location setting, tree view fixes |
 | 0.3.0 | 2024-12-08 | Renamed to Terminal Workspaces, agentic workflow docs |
 | 0.2.0 | 2024-12-08 | Sidebar UI, folders, profiles, tmux integration |

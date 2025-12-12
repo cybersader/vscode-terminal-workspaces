@@ -460,11 +460,24 @@ export function activate(context: vscode.ExtensionContext) {
     // RUN TASK
     // =========================================================================
 
+    // Helper to find existing terminal by name
+    const findTerminalByName = (name: string): vscode.Terminal | undefined => {
+        return vscode.window.terminals.find(t => t.name === name);
+    };
+
     // Helper to run a task, respecting terminal location setting
     const runTaskDirectly = async (task: TerminalTaskItem) => {
         const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
 
         if (terminalLocation === 'editor') {
+            // Check if terminal with this name already exists
+            const existingTerminal = findTerminalByName(task.name);
+            if (existingTerminal) {
+                // Reuse existing terminal - just show it
+                existingTerminal.show();
+                return;
+            }
+
             // Create terminal directly in editor area
             // Don't set shellPath/shellArgs - use default shell and send command via sendText
             // This prevents the shell from exiting immediately (which happens with cmd.exe /C)
@@ -477,20 +490,7 @@ export function activate(context: vscode.ExtensionContext) {
             terminal.show();
 
             // Build the full command including shell wrapper if needed
-            let fullCommand = generated.command;
-            if (generated.shellOptions?.executable) {
-                const shell = generated.shellOptions.executable;
-                const args = generated.shellOptions.args?.join(' ') || '';
-
-                if (shell.toLowerCase().includes('cmd.exe')) {
-                    // For cmd.exe, use /K instead of /C to keep the shell open
-                    // But actually, we should just send the WSL command directly
-                    // since the default VS Code terminal on Windows can run wsl.exe
-                    // The command already includes wsl.exe when needed
-                } else if (shell.toLowerCase().includes('powershell')) {
-                    // PowerShell commands can be sent directly
-                }
-            }
+            const fullCommand = generated.command;
 
             terminal.sendText(fullCommand);
         } else {
@@ -1011,11 +1011,20 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
+            // Check if terminal with this name already exists
+            const terminalName = `tmux: ${session.name}`;
+            const existingTerminal = findTerminalByName(terminalName);
+            if (existingTerminal) {
+                // Reuse existing terminal - just show it
+                existingTerminal.show();
+                return;
+            }
+
             // Create terminal - don't set cwd since tmux will handle the working directory
             // The session's path might not exist on the Windows side or could be invalid
             const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
             const terminal = vscode.window.createTerminal({
-                name: `tmux: ${session.name}`,
+                name: terminalName,
                 // Intentionally not setting cwd - tmux attach will restore the session's directory
                 location: terminalLocation === 'editor'
                     ? vscode.TerminalLocation.Editor
@@ -1074,6 +1083,145 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showInformationMessage(`Imported "${session.name}" as task "${name}"`);
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to import session: ${error}`);
+            }
+        }
+    );
+
+    const killTmuxSessionCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.killTmuxSession',
+        async (item: TaskTreeItem) => {
+            if (!item?.itemData) {
+                return;
+            }
+
+            let sessionName: string;
+
+            if (item.itemData.type === 'tmuxSession') {
+                // Untracked tmux session
+                const sessionData = item.itemData as TmuxSessionData;
+                sessionName = sessionData.session.name;
+            } else if (item.itemData.type === 'task') {
+                // Task - check if it uses tmux mode
+                const task = item.itemData as TerminalTaskItem;
+
+                // Get the profile to check if it's tmux
+                const profile = task.profileId ? configManager.getProfile(task.profileId) : undefined;
+                const isTmux = profile?.tmux?.enabled || task.overrides?.tmux?.enabled;
+
+                if (!isTmux) {
+                    vscode.window.showWarningMessage('This task does not use tmux mode');
+                    return;
+                }
+
+                // Get the tmux session name (custom or task name)
+                sessionName = task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || task.name;
+            } else {
+                return;
+            }
+
+            // Confirm before killing
+            const confirm = await vscode.window.showWarningMessage(
+                `Kill tmux session "${sessionName}"?`,
+                { modal: true },
+                'Kill Session'
+            );
+
+            if (confirm !== 'Kill Session') {
+                return;
+            }
+
+            try {
+                // Close any VS Code terminal attached to this session
+                const terminalName = `tmux: ${sessionName}`;
+                const existingTerminal = findTerminalByName(terminalName);
+                if (existingTerminal) {
+                    existingTerminal.dispose();
+                }
+
+                // Kill the tmux session
+                const isRemoteWSL = vscode.env.remoteName === 'wsl';
+                const killCommand = `tmux kill-session -t "${sessionName}"`;
+
+                if (isRemoteWSL) {
+                    // In WSL, run directly
+                    const { exec } = require('child_process');
+                    exec(killCommand, (error: Error | null) => {
+                        if (error) {
+                            vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
+                        } else {
+                            vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
+                            treeDataProvider.refreshTmuxSessions();
+                        }
+                    });
+                } else {
+                    // On Windows, go through WSL
+                    const { exec } = require('child_process');
+                    exec(`wsl.exe -e bash -c '${killCommand}'`, (error: Error | null) => {
+                        if (error) {
+                            vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
+                        } else {
+                            vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
+                            treeDataProvider.refreshTmuxSessions();
+                        }
+                    });
+                }
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to kill session: ${error}`);
+            }
+        }
+    );
+
+    const killTmuxSessionFromTerminalCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.killTmuxSessionFromTerminal',
+        async (terminal?: vscode.Terminal) => {
+            // Get the terminal - either passed from context menu or use active terminal
+            const targetTerminal = terminal || vscode.window.activeTerminal;
+            if (!targetTerminal) {
+                vscode.window.showErrorMessage('No terminal selected');
+                return;
+            }
+
+            // Check if it's a tmux terminal (name starts with "tmux: ")
+            const terminalName = targetTerminal.name;
+            if (!terminalName.startsWith('tmux: ')) {
+                vscode.window.showWarningMessage('This terminal is not a tmux session. Use this command on terminals named "tmux: <session>"');
+                return;
+            }
+
+            const sessionName = terminalName.replace('tmux: ', '');
+
+            // Confirm before killing
+            const confirm = await vscode.window.showWarningMessage(
+                `Kill tmux session "${sessionName}"?`,
+                { modal: true },
+                'Kill Session'
+            );
+
+            if (confirm !== 'Kill Session') {
+                return;
+            }
+
+            try {
+                // Close the VS Code terminal
+                targetTerminal.dispose();
+
+                // Kill the tmux session
+                const isRemoteWSL = vscode.env.remoteName === 'wsl';
+                const killCommand = `tmux kill-session -t "${sessionName}"`;
+
+                const { exec } = require('child_process');
+                const command = isRemoteWSL ? killCommand : `wsl.exe -e bash -c '${killCommand}'`;
+
+                exec(command, (error: Error | null) => {
+                    if (error) {
+                        vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
+                    } else {
+                        vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
+                        treeDataProvider.refreshTmuxSessions();
+                    }
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to kill session: ${error}`);
             }
         }
     );
@@ -1199,6 +1347,34 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    const revealInVSCodeExplorerCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.revealInVSCodeExplorer',
+        async (element: any) => {
+            if (!element?.itemData?.path) {
+                vscode.window.showErrorMessage('No path available for this item');
+                return;
+            }
+
+            const taskPath = element.itemData.path;
+
+            // Convert WSL path to Windows path if needed for VS Code
+            let revealPath = taskPath;
+            if (process.platform === 'win32' && taskPath.startsWith('/mnt/')) {
+                const match = taskPath.match(/^\/mnt\/([a-z])\/(.*)/i);
+                if (match) {
+                    revealPath = `${match[1].toUpperCase()}:\\${match[2].replace(/\//g, '\\')}`;
+                }
+            }
+
+            try {
+                // Reveal in VS Code's file explorer sidebar
+                await vscode.commands.executeCommand('revealInExplorer', vscode.Uri.file(revealPath));
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to reveal in VS Code Explorer: ${error}`);
+            }
+        }
+    );
+
     // =========================================================================
     // OPEN SETTINGS
     // =========================================================================
@@ -1258,12 +1434,15 @@ export function activate(context: vscode.ExtensionContext) {
         openManagerCommand,
         openSettingsCommand,
         revealInExplorerCommand,
+        revealInVSCodeExplorerCommand,
         searchTasksCommand,
         refreshTmuxSessionsCommand,
         importTmuxSessionsCommand,
         attachTmuxSessionCommand,
         attachAllSessionsCommand,
         importTmuxSessionCommand,
+        killTmuxSessionCommand,
+        killTmuxSessionFromTerminalCommand,
         configWatcher
     );
 }
