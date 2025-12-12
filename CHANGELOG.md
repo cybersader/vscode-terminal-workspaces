@@ -5,6 +5,22 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2024-12-12
+
+### Added
+
+- **Active Terminal Indicators** - Tasks and tmux sessions now show green when a terminal is open, grey when inactive
+- **Terminal Location Setting** - New `terminalWorkspaces.terminalLocation` setting to open terminals in the editor area (for 2D grid layouts) or panel
+  - Works for both regular tasks and tmux session attachments
+
+### Fixed
+
+- **Tree View Alignment** - Fixed icon alignment issues where folder children appeared misaligned
+  - Folders now use `archive` icon for consistent width with task icons
+  - Tasks use `circle-filled` icons that align properly with tmux sessions
+- **Tree View Collapse** - Added unique IDs to all tree items to preserve expansion state across refreshes
+- **Editor Terminal Location** - Regular tasks now properly open in editor area when setting is configured (previously only worked for tmux sessions)
+
 ## [0.3.0] - 2024-12-08
 
 ### Changed
@@ -78,6 +94,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.0 | 2024-12-12 | Active terminal indicators, terminal location setting, tree view fixes |
 | 0.3.0 | 2024-12-08 | Renamed to Terminal Workspaces, agentic workflow docs |
 | 0.2.0 | 2024-12-08 | Sidebar UI, folders, profiles, tmux integration |
 | 0.1.0 | 2024-12-07 | Initial release |
