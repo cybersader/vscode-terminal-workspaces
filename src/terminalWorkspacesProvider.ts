@@ -88,8 +88,12 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             const profile = this.configManager.getProfile(ft.task.profileId || 'wsl-default');
             if (profile?.tmux?.enabled === true || ft.task.overrides?.tmux?.enabled === true) {
                 // Use custom session name if set, otherwise task name
-                const sessionName = ft.task.overrides?.tmux?.sessionName || ft.task.name;
-                trackedNames.push(sessionName);
+                // IMPORTANT: Sanitize the name the same way configManager does when creating sessions
+                const rawSessionName = ft.task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || ft.task.name;
+                const sanitizedSessionName = rawSessionName
+                    .replace(/[^a-zA-Z0-9_-]/g, '_')
+                    .substring(0, 50);
+                trackedNames.push(sanitizedSessionName);
             }
         }
 

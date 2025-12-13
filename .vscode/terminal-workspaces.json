@@ -1,0 +1,11 @@
+{
+  "version": "1.0.0",
+  "profiles": [],
+  "defaultProfileId": "wsl-default",
+  "items": [],
+  "settings": {
+    "autoGenerateTasksJson": true,
+    "groupTaskLabel": "Open All Terminals",
+    "createGroupTask": true
+  }
+}
