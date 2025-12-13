@@ -5,6 +5,13 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2024-12-13
+
+### Fixed
+
+- **Duplicate tmux Sessions Bug** - Fixed issue where tasks with spaces in their names (e.g., "claude code") would appear both as tracked tasks AND in untracked sessions. Session names are now properly sanitized to match tmux's actual session names (spaces become underscores).
+- **Kill Session Not Working** - Fixed "can't find session" error when trying to kill tmux sessions from tasks with spaces in their names.
+
 ## [0.4.1] - 2024-12-12
 
 ### Added
@@ -107,6 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.2 | 2024-12-13 | Fix duplicate sessions bug, session name sanitization |
 | 0.4.1 | 2024-12-12 | Kill tmux from terminal tab, reveal in explorer, SSH/tmux docs |
 | 0.4.0 | 2024-12-12 | Active terminal indicators, terminal location setting, tree view fixes |
 | 0.3.0 | 2024-12-08 | Renamed to Terminal Workspaces, agentic workflow docs |

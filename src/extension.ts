@@ -1114,7 +1114,11 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 // Get the tmux session name (custom or task name)
-                sessionName = task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || task.name;
+                // IMPORTANT: Sanitize the same way configManager does when creating sessions
+                const rawSessionName = task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || task.name;
+                sessionName = rawSessionName
+                    .replace(/[^a-zA-Z0-9_-]/g, '_')
+                    .substring(0, 50);
             } else {
                 return;
             }
