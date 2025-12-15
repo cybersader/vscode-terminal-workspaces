@@ -1143,32 +1143,32 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 // Kill the tmux session
-                const isRemoteWSL = vscode.env.remoteName === 'wsl';
-                const killCommand = `tmux kill-session -t "${sessionName}"`;
+                // Escape any single quotes in session name for shell safety
+                const escapedSessionName = sessionName.replace(/'/g, "'\\''");
 
-                if (isRemoteWSL) {
-                    // In WSL, run directly
-                    const { exec } = require('child_process');
-                    exec(killCommand, (error: Error | null) => {
-                        if (error) {
-                            vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
-                        } else {
-                            vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
-                            treeDataProvider.refreshTmuxSessions();
-                        }
-                    });
+                const { exec } = require('child_process');
+                let command: string;
+
+                // Determine how to run tmux based on environment
+                const isRemoteWSL = vscode.env.remoteName === 'wsl';
+                const isWindows = process.platform === 'win32';
+
+                if (isRemoteWSL || !isWindows) {
+                    // In WSL or native Linux/macOS - run tmux directly
+                    command = `tmux kill-session -t '${escapedSessionName}'`;
                 } else {
-                    // On Windows, go through WSL
-                    const { exec } = require('child_process');
-                    exec(`wsl.exe -e bash -c '${killCommand}'`, (error: Error | null) => {
-                        if (error) {
-                            vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
-                        } else {
-                            vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
-                            treeDataProvider.refreshTmuxSessions();
-                        }
-                    });
+                    // On Windows (not in WSL) - go through wsl.exe
+                    command = `wsl.exe tmux kill-session -t "${sessionName}"`;
                 }
+
+                exec(command, (error: Error | null) => {
+                    if (error) {
+                        vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
+                    } else {
+                        vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
+                        treeDataProvider.refreshTmuxSessions();
+                    }
+                });
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to kill session: ${error}`);
             }
@@ -1210,11 +1210,23 @@ export function activate(context: vscode.ExtensionContext) {
                 targetTerminal.dispose();
 
                 // Kill the tmux session
-                const isRemoteWSL = vscode.env.remoteName === 'wsl';
-                const killCommand = `tmux kill-session -t "${sessionName}"`;
+                // Escape any single quotes in session name for shell safety
+                const escapedSessionName = sessionName.replace(/'/g, "'\\''");
 
                 const { exec } = require('child_process');
-                const command = isRemoteWSL ? killCommand : `wsl.exe -e bash -c '${killCommand}'`;
+                let command: string;
+
+                // Determine how to run tmux based on environment
+                const isRemoteWSL = vscode.env.remoteName === 'wsl';
+                const isWindows = process.platform === 'win32';
+
+                if (isRemoteWSL || !isWindows) {
+                    // In WSL or native Linux/macOS - run tmux directly
+                    command = `tmux kill-session -t '${escapedSessionName}'`;
+                } else {
+                    // On Windows (not in WSL) - go through wsl.exe
+                    command = `wsl.exe tmux kill-session -t "${sessionName}"`;
+                }
 
                 exec(command, (error: Error | null) => {
                     if (error) {

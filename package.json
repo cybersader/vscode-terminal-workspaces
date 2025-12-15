@@ -2,7 +2,7 @@
   "name": "terminal-workspaces",
   "displayName": "Terminal Workspaces",
   "description": "Manage terminal sessions with a sidebar GUI. Supports WSL, tmux, PowerShell, nested folders, profiles, and more. Perfect for multi-project and agentic coding workflows.",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "publisher": "cybersader",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -440,7 +440,7 @@
         },
         {
           "command": "terminalWorkspaces.killTmuxSession",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && viewItem == terminalTaskTmuxActive",
           "group": "3_kill@1"
         }
       ]

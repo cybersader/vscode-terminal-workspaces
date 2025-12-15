@@ -189,7 +189,15 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             ? new vscode.ThemeColor('terminal.ansiGreen')
             : new vscode.ThemeColor('disabledForeground');
         item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
-        item.contextValue = 'terminalTask';
+
+        // Check if this task uses tmux and has an active session
+        const isTmux = profile?.tmux?.enabled || task.overrides?.tmux?.enabled;
+        if (isTmux && isActive) {
+            // tmux task with active session - show kill option
+            item.contextValue = 'terminalTaskTmuxActive';
+        } else {
+            item.contextValue = 'terminalTask';
+        }
         item.description = this.shortenPath(task.path);
         item.tooltip = this.buildTaskTooltip(task, profile);
 

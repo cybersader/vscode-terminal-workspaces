@@ -5,6 +5,14 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2024-12-13
+
+### Fixed
+
+- **Kill Session Shell Quoting** - Fixed command quoting issues when killing tmux sessions with special characters in names
+- **Kill Session Only on Active** - "Kill Session" context menu now only appears on tasks with active tmux sessions (green dot), not inactive ones
+- **Native Linux/macOS Support** - Kill session command now works correctly on native Linux/macOS, not just WSL
+
 ## [0.4.2] - 2024-12-13
 
 ### Fixed
@@ -114,6 +122,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.3 | 2024-12-13 | Fix kill session quoting, only show on active sessions |
 | 0.4.2 | 2024-12-13 | Fix duplicate sessions bug, session name sanitization |
 | 0.4.1 | 2024-12-12 | Kill tmux from terminal tab, reveal in explorer, SSH/tmux docs |
 | 0.4.0 | 2024-12-12 | Active terminal indicators, terminal location setting, tree view fixes |
