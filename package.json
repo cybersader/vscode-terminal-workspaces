@@ -2,7 +2,7 @@
   "name": "terminal-workspaces",
   "displayName": "Terminal Workspaces",
   "description": "Manage terminal sessions with a sidebar GUI. Supports WSL, tmux, PowerShell, nested folders, profiles, and more. Perfect for multi-project and agentic coding workflows.",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "publisher": "cybersader",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -305,17 +305,17 @@
       "view/item/context": [
         {
           "command": "terminalWorkspaces.runTask",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "inline@1"
         },
         {
           "command": "terminalWorkspaces.editTask",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "inline@2"
         },
         {
           "command": "terminalWorkspaces.delete",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "inline@3"
         },
         {
@@ -335,37 +335,37 @@
         },
         {
           "command": "terminalWorkspaces.runTask",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "1_run@1"
         },
         {
           "command": "terminalWorkspaces.editTask",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "2_edit@1"
         },
         {
           "command": "terminalWorkspaces.rename",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "2_edit@2"
         },
         {
           "command": "terminalWorkspaces.moveToFolder",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "2_edit@3"
         },
         {
           "command": "terminalWorkspaces.delete",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "3_delete@1"
         },
         {
           "command": "terminalWorkspaces.revealInExplorer",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "4_reveal@1"
         },
         {
           "command": "terminalWorkspaces.revealInVSCodeExplorer",
-          "when": "view == terminalWorkspacesView && viewItem == terminalTask",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTask || viewItem == terminalTaskTmuxActive)",
           "group": "4_reveal@2"
         },
         {

@@ -107,16 +107,26 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
     /**
      * Check if there's an active terminal matching the task name
+     * @param taskName - The display name of the task
+     * @param sanitizedTmuxName - Optional sanitized tmux session name to also check
      */
-    private isTerminalActive(taskName: string): boolean {
+    private isTerminalActive(taskName: string, sanitizedTmuxName?: string): boolean {
         const terminals = vscode.window.terminals;
         return terminals.some(terminal => {
             // Match exact name or "Task: name" format from VS Code tasks
             const terminalName = terminal.name;
-            return terminalName === taskName ||
+            const matches = terminalName === taskName ||
                    terminalName === `Task - ${taskName}` ||
                    terminalName === `tmux: ${taskName}` ||
                    terminalName.startsWith(`${taskName} `);
+
+            // Also check sanitized tmux session name if provided
+            if (!matches && sanitizedTmuxName && sanitizedTmuxName !== taskName) {
+                return terminalName === `tmux: ${sanitizedTmuxName}` ||
+                       terminalName === sanitizedTmuxName;
+            }
+
+            return matches;
         });
     }
 
@@ -180,8 +190,20 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         // Get the profile for this task
         const profile = this.configManager.getProfile(task.profileId || 'wsl-default');
 
+        // Check if this task uses tmux
+        const isTmux = profile?.tmux?.enabled || task.overrides?.tmux?.enabled;
+
+        // Calculate sanitized tmux session name if this task uses tmux
+        let sanitizedTmuxName: string | undefined;
+        if (isTmux) {
+            const rawSessionName = task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || task.name;
+            sanitizedTmuxName = rawSessionName
+                .replace(/[^a-zA-Z0-9_-]/g, '_')
+                .substring(0, 50);
+        }
+
         // Check if there's an active terminal for this task
-        const isActive = this.isTerminalActive(task.name);
+        const isActive = this.isTerminalActive(task.name, sanitizedTmuxName);
 
         // Use circle-filled for consistent alignment with tmux sessions
         // Green when terminal is active, grey when inactive
@@ -190,8 +212,8 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             : new vscode.ThemeColor('disabledForeground');
         item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
 
-        // Check if this task uses tmux and has an active session
-        const isTmux = profile?.tmux?.enabled || task.overrides?.tmux?.enabled;
+        // Set contextValue - ALWAYS include base 'terminalTask' to ensure inline buttons show
+        // Add 'TmuxActive' suffix when tmux is active for kill option
         if (isTmux && isActive) {
             // tmux task with active session - show kill option
             item.contextValue = 'terminalTaskTmuxActive';

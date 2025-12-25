@@ -1136,10 +1136,20 @@ export function activate(context: vscode.ExtensionContext) {
 
             try {
                 // Close any VS Code terminal attached to this session
-                const terminalName = `tmux: ${sessionName}`;
-                const existingTerminal = findTerminalByName(terminalName);
+                // Check both naming conventions: "tmux: sessionName" and raw task name
+                const tmuxTerminalName = `tmux: ${sessionName}`;
+                let existingTerminal = findTerminalByName(tmuxTerminalName);
                 if (existingTerminal) {
                     existingTerminal.dispose();
+                }
+
+                // Also try to find terminal by the original task name (for tasks run via runTaskDirectly)
+                if (item.itemData?.type === 'task') {
+                    const task = item.itemData as TerminalTaskItem;
+                    const taskTerminal = findTerminalByName(task.name);
+                    if (taskTerminal) {
+                        taskTerminal.dispose();
+                    }
                 }
 
                 // Kill the tmux session
@@ -1166,7 +1176,10 @@ export function activate(context: vscode.ExtensionContext) {
                         vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
                     } else {
                         vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
-                        treeDataProvider.refreshTmuxSessions();
+                        // Delay refresh to allow VS Code to update terminal list
+                        setTimeout(() => {
+                            treeDataProvider.refresh();
+                        }, 200);
                     }
                 });
             } catch (error) {
@@ -1233,7 +1246,10 @@ export function activate(context: vscode.ExtensionContext) {
                         vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
                     } else {
                         vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
-                        treeDataProvider.refreshTmuxSessions();
+                        // Delay refresh to allow VS Code to update terminal list
+                        setTimeout(() => {
+                            treeDataProvider.refresh();
+                        }, 200);
                     }
                 });
             } catch (error) {
