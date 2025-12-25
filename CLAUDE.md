@@ -97,7 +97,29 @@ src/
 4. **Terminal naming**: Tasks run via `runTaskDirectly` use raw task.name; attached sessions use `tmux: ${sanitizedName}`
 5. **Menu visibility**: Use explicit contextValue matches in package.json (`viewItem == terminalTask || viewItem == terminalTaskTmuxActive`)
 
+### Git Commit Rules
+
+**NEVER include in commit messages:**
+- "Generated with Claude Code" or similar AI attribution
+- "Co-Authored-By: Claude" or any AI co-author lines
+- Emojis (unless explicitly requested)
+- Any AI tool branding or links
+
+Commit messages should be clean and professional, attributable solely to the human developer.
+
 ## Common Tasks
+
+### Release Process
+
+When publishing a new version:
+1. Update version in `package.json`
+2. Add entry to `changelog.md` with date and categorized changes (Fixed/Added/Changed)
+3. Update version history summary table at bottom of changelog
+4. Compile: `npm run compile`
+5. Commit with message: `v0.X.X: Brief description`
+6. Push to GitHub
+7. Package: `vsce package`
+8. Publish: `vsce publish` (or upload .vsix manually to Marketplace)
 
 ### Adding a New Command
 
@@ -106,6 +128,7 @@ src/
 3. Register handler in extension.ts activate()
 4. Add to context.subscriptions
 5. Update README.md and docs/user-guide.md
+6. Add to changelog.md under appropriate version
 
 ### Adding a New Profile Type
 

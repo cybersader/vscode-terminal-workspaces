@@ -5,6 +5,20 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2025-12-25
+
+### Fixed
+
+- **Hover Buttons on Active Tasks** - Inline buttons (play, edit, delete) now appear correctly when hovering over active tmux sessions
+- **Green Indicator Persistence** - Fixed issue where green active indicator stayed after killing a tmux session
+- **Terminal Name Matching** - Fixed detection of active terminals for tasks with sanitized tmux session names (e.g., "my project" -> "my_project")
+- **Menu Pattern Reliability** - Changed package.json menu patterns from regex to explicit OR conditions for consistent button visibility
+
+### Added
+
+- **CLAUDE.md** - AI agent collaboration conventions and development guidelines
+- **AI Agent Workflows Guide** - New documentation (`docs/ai-agent-workflows.md`) for using the extension with Claude Code, Cursor, and other AI coding tools
+
 ## [0.4.3] - 2024-12-13
 
 ### Fixed
@@ -122,6 +136,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.4 | 2025-12-25 | Fix hover buttons on active tasks, AI agent docs |
 | 0.4.3 | 2024-12-13 | Fix kill session quoting, only show on active sessions |
 | 0.4.2 | 2024-12-13 | Fix duplicate sessions bug, session name sanitization |
 | 0.4.1 | 2024-12-12 | Kill tmux from terminal tab, reveal in explorer, SSH/tmux docs |
