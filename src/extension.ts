@@ -1172,15 +1172,23 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 exec(command, (error: Error | null) => {
-                    if (error) {
+                    // Handle "can't find session" as success - session is already gone
+                    const isSessionNotFound = error?.message?.includes("can't find session") ||
+                                              error?.message?.includes("no server running");
+
+                    if (error && !isSessionNotFound) {
                         vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
                     } else {
-                        vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
-                        // Delay refresh to allow VS Code to update terminal list
-                        setTimeout(() => {
-                            treeDataProvider.refresh();
-                        }, 200);
+                        if (isSessionNotFound) {
+                            vscode.window.showInformationMessage(`Session "${sessionName}" already ended, terminal closed`);
+                        } else {
+                            vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
+                        }
                     }
+                    // Always refresh to update indicators
+                    setTimeout(() => {
+                        treeDataProvider.refresh();
+                    }, 200);
                 });
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to kill session: ${error}`);
@@ -1242,15 +1250,23 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 exec(command, (error: Error | null) => {
-                    if (error) {
+                    // Handle "can't find session" as success - session is already gone
+                    const isSessionNotFound = error?.message?.includes("can't find session") ||
+                                              error?.message?.includes("no server running");
+
+                    if (error && !isSessionNotFound) {
                         vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
                     } else {
-                        vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
-                        // Delay refresh to allow VS Code to update terminal list
-                        setTimeout(() => {
-                            treeDataProvider.refresh();
-                        }, 200);
+                        if (isSessionNotFound) {
+                            vscode.window.showInformationMessage(`Session "${sessionName}" already ended, terminal closed`);
+                        } else {
+                            vscode.window.showInformationMessage(`Killed tmux session "${sessionName}"`);
+                        }
                     }
+                    // Always refresh to update indicators
+                    setTimeout(() => {
+                        treeDataProvider.refresh();
+                    }, 200);
                 });
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to kill session: ${error}`);

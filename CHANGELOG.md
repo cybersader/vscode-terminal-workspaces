@@ -5,6 +5,12 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.5] - 2025-12-26
+
+### Fixed
+
+- **Kill Session on Already-Dead Sessions** - "Kill Session" no longer shows error when tmux session was already terminated; gracefully closes terminal and refreshes indicators
+
 ## [0.4.4] - 2025-12-25
 
 ### Fixed
@@ -136,6 +142,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.4.5 | 2025-12-26 | Graceful handling of already-dead tmux sessions |
 | 0.4.4 | 2025-12-25 | Fix hover buttons on active tasks, AI agent docs |
 | 0.4.3 | 2024-12-13 | Fix kill session quoting, only show on active sessions |
 | 0.4.2 | 2024-12-13 | Fix duplicate sessions bug, session name sanitization |
