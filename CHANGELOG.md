@@ -5,6 +5,20 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2025-12-30
+
+### Added
+
+- **Zellij Support** - New terminal multiplexer option alongside tmux
+  - New built-in profiles: `WSL + Zellij` and `Bash + Zellij`
+  - Same attach-or-create, always-new, and attach-only modes as tmux
+  - Kill Zellij Session command for active zellij tasks
+  - ZellijManager for session detection and management
+
+### Fixed
+
+- **Green Indicator Accuracy** - Fixed issue where green active indicator could persist after a multiplexer session was killed externally. Now verifies actual session existence (not just VS Code terminal) before showing active status
+
 ## [0.4.5] - 2025-12-26
 
 ### Fixed
@@ -142,6 +156,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.5.0 | 2025-12-30 | Zellij support, improved active indicator accuracy |
 | 0.4.5 | 2025-12-26 | Graceful handling of already-dead tmux sessions |
 | 0.4.4 | 2025-12-25 | Fix hover buttons on active tasks, AI agent docs |
 | 0.4.3 | 2024-12-13 | Fix kill session quoting, only show on active sessions |

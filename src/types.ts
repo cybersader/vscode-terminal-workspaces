@@ -13,6 +13,11 @@ export type ShellType = 'wsl' | 'wsl-bash' | 'powershell' | 'cmd' | 'bash' | 'zs
 
 export type TmuxMode = 'none' | 'attach-or-create' | 'always-new' | 'attach-only' | 'custom';
 
+export type ZellijMode = 'none' | 'attach-or-create' | 'always-new' | 'attach-only';
+
+/** Type of terminal multiplexer to use */
+export type MultiplexerType = 'none' | 'tmux' | 'zellij';
+
 export interface TerminalColor {
     /** Terminal tab background color (hex or VS Code theme color) */
     background?: string;
@@ -31,6 +36,15 @@ export interface TmuxConfig {
     customCommand?: string;
 }
 
+export interface ZellijConfig {
+    /** Whether to use zellij */
+    enabled?: boolean;
+    /** How to handle zellij sessions */
+    mode?: ZellijMode;
+    /** Session name (defaults to task name if not specified) */
+    sessionName?: string;
+}
+
 export interface Profile {
     /** Unique identifier for the profile */
     id: string;
@@ -46,6 +60,8 @@ export interface Profile {
     customShellArgs?: string[];
     /** Tmux configuration */
     tmux?: TmuxConfig;
+    /** Zellij configuration */
+    zellij?: ZellijConfig;
     /** Terminal colors */
     colors?: TerminalColor;
     /** Terminal icon (VS Code codicon name without $()) */
@@ -145,6 +161,18 @@ export const BUILTIN_PROFILES: Profile[] = [
         icon: 'terminal-linux'
     },
     {
+        id: 'wsl-zellij',
+        name: 'WSL + Zellij',
+        description: 'Open WSL with Zellij session (attach or create)',
+        shellType: 'wsl',
+        zellij: {
+            enabled: true,
+            mode: 'attach-or-create'
+        },
+        builtin: true,
+        icon: 'terminal-linux'
+    },
+    {
         id: 'powershell',
         name: 'PowerShell',
         description: 'Windows PowerShell terminal',
@@ -165,6 +193,18 @@ export const BUILTIN_PROFILES: Profile[] = [
         name: 'Bash',
         description: 'Native bash terminal (Linux/macOS)',
         shellType: 'bash',
+        builtin: true,
+        icon: 'terminal-bash'
+    },
+    {
+        id: 'bash-zellij',
+        name: 'Bash + Zellij',
+        description: 'Bash with Zellij session (Linux/macOS)',
+        shellType: 'bash',
+        zellij: {
+            enabled: true,
+            mode: 'attach-or-create'
+        },
         builtin: true,
         icon: 'terminal-bash'
     },

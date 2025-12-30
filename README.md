@@ -16,7 +16,7 @@
   </a>
 </p>
 
-A VS Code extension for managing terminal sessions with a visual sidebar interface. Supports WSL, tmux, PowerShell, nested folder organization, profiles, and more.
+A VS Code extension for managing terminal sessions with a visual sidebar interface. Supports WSL, tmux, Zellij, PowerShell, nested folder organization, profiles, and more.
 
 ## Features
 
@@ -24,8 +24,8 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 - **Active Status Indicators** - Green dot when terminal is open, grey when inactive
 - **Right-Click Integration** - Add folders from Explorer, files, or terminals
 - **Nested Organization** - Group tasks into folders for better organization
-- **Terminal Profiles** - WSL, tmux, PowerShell, CMD, bash with customizable settings
-- **tmux Integration** - Attach-or-create sessions, discover untracked sessions
+- **Terminal Profiles** - WSL, tmux, Zellij, PowerShell, CMD, bash with customizable settings
+- **Multiplexer Integration** - tmux and Zellij support with attach-or-create sessions, discover untracked sessions
 - **Editor Area Terminals** - Open terminals in the editor area for 2D grid layouts
 - **Quick Search** - Find and run tasks instantly with fuzzy search
 - **Path Validation** - Experimental feature to detect and fix broken paths
@@ -50,7 +50,7 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 
 - **[User Guide](docs/user-guide.md)** - Complete usage instructions
 - **[Configuration](docs/configuration.md)** - Settings, profiles, and customization
-- **[tmux Integration](docs/tmux-integration.md)** - Working with tmux sessions
+- **[tmux Integration](docs/tmux-integration.md)** - Working with tmux and Zellij sessions
 - **[Workflows](docs/workflows.md)** - Recommended workflow patterns
 
 ## For Developers
@@ -88,7 +88,7 @@ See [Configuration](docs/configuration.md) for all options.
 - Multi-project monorepos
 - Microservices development
 - Switching between work and personal projects
-- Persistent tmux sessions across SSH connections
+- Persistent tmux/Zellij sessions across SSH connections
 
 ## Agentic Coding Workflows
 
@@ -96,13 +96,13 @@ Terminal Workspaces shines when working with **Claude Code**, **Cursor**, **Aide
 
 - **Multi-Agent Sessions** - Run multiple Claude Code instances in different project directories simultaneously
 - **Quick Context Switching** - Jump between agent conversations across different codebases with one click
-- **tmux Persistence** - Keep agent sessions alive even when VS Code restarts or SSH disconnects
+- **Session Persistence** - Keep agent sessions alive with tmux/Zellij even when VS Code restarts or SSH disconnects
 - **Organized Workspaces** - Group related projects together (frontend + backend + docs) for full-stack agent workflows
-- **Session Recovery** - Reconnect to running tmux sessions where your agents are still working
+- **Session Recovery** - Reconnect to running tmux/Zellij sessions where your agents are still working
 
 **Example workflow:**
 1. Create tasks for each project in your stack
-2. Launch Claude Code in each terminal with tmux profiles
+2. Launch Claude Code in each terminal with tmux or Zellij profiles
 3. Switch between agent conversations as needed
 4. Close VS Code, come back later, reattach to all sessions still running
 
@@ -111,29 +111,30 @@ Terminal Workspaces shines when working with **Claude Code**, **Cursor**, **Aide
 The ultimate setup for coding anywhere with full session persistence:
 
 ```
-┌─────────────┐     Tailscale      ┌─────────────────┐
-│   Phone     │◄──────SSH─────────►│  Windows PC     │
-│   Termux    │                    │  WSL + tmux     │
-│   + tmux    │                    │  + Claude Code  │
-└─────────────┘                    └─────────────────┘
+┌─────────────┐     Tailscale      ┌───────────────────────────┐
+│   Phone     │◄──────SSH─────────►│  Windows PC               │
+│   Termux    │                    │  WSL + multiplexer        │
+│             │                    │  (tmux or Zellij)         │
+│             │                    │  + Claude Code            │
+└─────────────┘                    └───────────────────────────┘
        │                                    │
-       └────────► Same tmux sessions ◄──────┘
+       └────────► Same sessions ◄───────────┘
 ```
 
 **The Stack:**
 - **Tailscale** - Secure mesh VPN connecting all your devices
 - **WSL** - Linux environment on Windows running your dev setup
-- **tmux** - Session persistence that survives disconnects
+- **tmux or Zellij** - Session persistence that survives disconnects (Zellij works better with some TUI apps like OpenCode)
 - **Termux** - Full Linux terminal on Android
 - **Terminal Workspaces** - Visual organization of all your project sessions
 
 **How it works:**
 1. Set up Tailscale on your PC and phone
 2. Enable Tailscale SSH to your WSL instance
-3. Create tmux-profile tasks for each project in Terminal Workspaces
-4. Start Claude Code sessions in each tmux terminal
+3. Create tmux or Zellij profile tasks for each project in Terminal Workspaces
+4. Start Claude Code sessions in each terminal
 5. Walk away from your PC...
-6. SSH from Termux on your phone → `tmux attach` → you're right where you left off
+6. SSH from Termux on your phone → `tmux attach` or `zellij attach` → you're right where you left off
 7. Come back to VS Code → click to reattach all sessions
 
 Your AI agents keep working. Your sessions never die. Code from anywhere.

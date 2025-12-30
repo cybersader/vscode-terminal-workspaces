@@ -1275,6 +1275,115 @@ export function activate(context: vscode.ExtensionContext) {
     );
 
     // =========================================================================
+    // ZELLIJ SESSION MANAGEMENT
+    // =========================================================================
+
+    const killZellijSessionCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.killZellijSession',
+        async (item: TaskTreeItem) => {
+            if (!item?.itemData) {
+                return;
+            }
+
+            let sessionName: string;
+
+            if (item.itemData.type === 'task') {
+                // Task - check if it uses zellij mode
+                const task = item.itemData as TerminalTaskItem;
+
+                // Get the profile to check if it's zellij
+                const profile = task.profileId ? configManager.getProfile(task.profileId) : undefined;
+                const isZellij = profile?.zellij?.enabled || task.overrides?.zellij?.enabled;
+
+                if (!isZellij) {
+                    vscode.window.showWarningMessage('This task does not use zellij mode');
+                    return;
+                }
+
+                // Get the zellij session name (custom or task name)
+                // IMPORTANT: Sanitize the same way configManager does when creating sessions
+                const rawSessionName = task.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || task.name;
+                sessionName = rawSessionName
+                    .replace(/[^a-zA-Z0-9_-]/g, '_')
+                    .substring(0, 50);
+            } else {
+                return;
+            }
+
+            // Confirm before killing
+            const confirm = await vscode.window.showWarningMessage(
+                `Kill zellij session "${sessionName}"?`,
+                { modal: true },
+                'Kill Session'
+            );
+
+            if (confirm !== 'Kill Session') {
+                return;
+            }
+
+            try {
+                // Close any VS Code terminal attached to this session
+                // Check both naming conventions: "zellij: sessionName" and raw task name
+                const zellijTerminalName = `zellij: ${sessionName}`;
+                let existingTerminal = findTerminalByName(zellijTerminalName);
+                if (existingTerminal) {
+                    existingTerminal.dispose();
+                }
+
+                // Also try to find terminal by the original task name (for tasks run via runTaskDirectly)
+                if (item.itemData?.type === 'task') {
+                    const task = item.itemData as TerminalTaskItem;
+                    const taskTerminal = findTerminalByName(task.name);
+                    if (taskTerminal) {
+                        taskTerminal.dispose();
+                    }
+                }
+
+                // Kill the zellij session
+                // Escape any single quotes in session name for shell safety
+                const escapedSessionName = sessionName.replace(/'/g, "'\\''");
+
+                const { exec } = require('child_process');
+                let command: string;
+
+                // Determine how to run zellij based on environment
+                const isRemoteWSL = vscode.env.remoteName === 'wsl';
+                const isWindows = process.platform === 'win32';
+
+                if (isRemoteWSL || !isWindows) {
+                    // In WSL or native Linux/macOS - run zellij directly
+                    command = `zellij kill-session '${escapedSessionName}'`;
+                } else {
+                    // On Windows (not in WSL) - go through wsl.exe
+                    command = `wsl.exe zellij kill-session "${sessionName}"`;
+                }
+
+                exec(command, (error: Error | null) => {
+                    // Handle "session not found" as success - session is already gone
+                    const isSessionNotFound = error?.message?.includes('not found') ||
+                                              error?.message?.includes('No such');
+
+                    if (error && !isSessionNotFound) {
+                        vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
+                    } else {
+                        if (isSessionNotFound) {
+                            vscode.window.showInformationMessage(`Session "${sessionName}" already ended, terminal closed`);
+                        } else {
+                            vscode.window.showInformationMessage(`Killed zellij session "${sessionName}"`);
+                        }
+                    }
+                    // Always refresh to update indicators
+                    setTimeout(() => {
+                        treeDataProvider.refresh();
+                    }, 200);
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to kill session: ${error}`);
+            }
+        }
+    );
+
+    // =========================================================================
     // SEARCH TASKS
     // =========================================================================
 
@@ -1491,6 +1600,7 @@ export function activate(context: vscode.ExtensionContext) {
         importTmuxSessionCommand,
         killTmuxSessionCommand,
         killTmuxSessionFromTerminalCommand,
+        killZellijSessionCommand,
         configWatcher
     );
 }

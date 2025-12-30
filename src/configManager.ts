@@ -464,6 +464,7 @@ export class ConfigManager {
             ...profile,
             ...overrides,
             tmux: overrides.tmux ? { ...profile.tmux, ...overrides.tmux } : profile.tmux,
+            zellij: overrides.zellij ? { ...profile.zellij, ...overrides.zellij } : profile.zellij,
             colors: overrides.colors ? { ...profile.colors, ...overrides.colors } : profile.colors,
             env: overrides.env ? { ...profile.env, ...overrides.env } : profile.env
         };
@@ -503,6 +504,8 @@ export class ConfigManager {
                     command = `wsl.exe --cd "${windowsPath}"`;
                     if (profile.tmux?.enabled) {
                         command = `wsl.exe -e bash -c "cd '${wslPath}' && ${this.buildTmuxCommand(sessionName, profile)}"`;
+                    } else if (profile.zellij?.enabled) {
+                        command = `wsl.exe -e bash -c "cd '${wslPath}' && ${this.buildZellijCommand(sessionName, profile)}"`;
                     }
                     shellOptions = { executable: 'cmd.exe', args: ['/C'] };
                 }
@@ -554,7 +557,7 @@ export class ConfigManager {
     }
 
     /**
-     * Build bash/zsh command with optional tmux
+     * Build bash/zsh command with optional tmux or zellij
      */
     private buildBashCommand(folderPath: string, sessionName: string, profile: Profile): string {
         const parts: string[] = [];
@@ -572,9 +575,12 @@ export class ConfigManager {
             parts.push(...profile.postCommands);
         }
 
-        // Tmux - check enabled explicitly (could be undefined)
+        // Multiplexer - check tmux first, then zellij
+        // Note: tmux and zellij are mutually exclusive
         if (profile.tmux?.enabled === true) {
             parts.push(this.buildTmuxCommand(sessionName, profile));
+        } else if (profile.zellij?.enabled === true) {
+            parts.push(this.buildZellijCommand(sessionName, profile));
         } else {
             // Keep shell open
             const shell = profile.shellType === 'zsh' ? 'zsh' : 'bash';
@@ -611,6 +617,34 @@ export class ConfigManager {
 
             default:
                 return `tmux new-session -A -s '${sessionName}'`;
+        }
+    }
+
+    /**
+     * Build zellij command based on mode
+     */
+    private buildZellijCommand(sessionName: string, profile: Profile): string {
+        if (!profile.zellij) {
+            return 'exec bash';
+        }
+
+        // Default to 'attach-or-create' if mode not specified
+        const mode = profile.zellij.mode || 'attach-or-create';
+
+        switch (mode) {
+            case 'attach-or-create':
+                // Zellij doesn't have a single command like tmux -A,
+                // so we use attach with fallback to new session
+                return `zellij attach '${sessionName}' 2>/dev/null || zellij -s '${sessionName}'`;
+
+            case 'always-new':
+                return `zellij -s '${sessionName}'`;
+
+            case 'attach-only':
+                return `zellij attach '${sessionName}' || echo 'Session ${sessionName} not found'`;
+
+            default:
+                return `zellij attach '${sessionName}' 2>/dev/null || zellij -s '${sessionName}'`;
         }
     }
 
