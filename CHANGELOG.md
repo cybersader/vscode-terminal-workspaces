@@ -5,6 +5,34 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.0] - 2025-12-31
+
+### Added
+
+- **Zellij Session Discovery** - Full parity with tmux session management
+  - Sidebar now shows "Zellij Sessions" section alongside tmux sessions
+  - Discover and attach to untracked zellij sessions
+  - Import zellij sessions as tracked tasks (single or bulk)
+  - Kill zellij sessions directly from sidebar
+  - Attach all untracked zellij sessions at once
+  - Refresh zellij sessions list
+  - Green active indicator for zellij sessions with attached terminals
+
+- **Windows Local Mode Detection** - tmux/Zellij sessions now detected when VS Code runs in Windows Local mode (not just WSL Remote mode)
+  - Uses `wsl.exe -e` to detect and list sessions from Windows
+  - Works seamlessly with system-wide installations (`/usr/bin/` or `/usr/local/bin/`)
+
+### Fixed
+
+- **Kill Zellij Session from Discovered Sessions** - Kill session command now works on both discovered (untracked) sessions and tracked task sessions
+- **Import Session Path Handling** - Fixed path expansion issue when importing sessions
+
+### Documentation
+
+- **Comprehensive Testing Guide** - Added critical information about WSL vs Windows mode debugging in dev-docs/building.md
+- **PATH Requirements** - Documented system-wide installation requirement for Windows Local mode detection in README and docs
+- **Zellij Documentation** - Added Zellij section to tmux-integration.md with keybindings, commands, and installation instructions
+
 ## [0.5.1] - 2025-12-31
 
 ### Fixed

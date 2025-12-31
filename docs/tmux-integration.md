@@ -2,6 +2,8 @@
 
 Terminal Workspaces provides deep integration with tmux for persistent terminal sessions.
 
+> **Note:** Terminal Workspaces also supports **Zellij** as an alternative multiplexer. Zellij provides similar persistence features with a different UI. See the [Zellij section](#zellij-alternative) below.
+
 ## Table of Contents
 
 - [Why tmux?](#why-tmux)
@@ -10,6 +12,7 @@ Terminal Workspaces provides deep integration with tmux for persistent terminal 
 - [Untracked Sessions](#untracked-sessions)
 - [Session Discovery Workflow](#session-discovery-workflow)
 - [Troubleshooting](#troubleshooting)
+- [Zellij Alternative](#zellij-alternative)
 
 ## Why tmux?
 
@@ -157,7 +160,7 @@ A powerful workflow for remote development:
 
 ### tmux Sessions Not Appearing
 
-**Cause**: tmux may not be in PATH or installed.
+**Cause 1**: tmux may not be in PATH or installed.
 
 **Check**:
 ```bash
@@ -173,6 +176,12 @@ sudo apt install tmux
 # macOS
 brew install tmux
 ```
+
+**Cause 2 (Windows Local Mode)**: tmux installed to user directory.
+
+When VS Code runs in Windows Local mode (not WSL Remote), it detects tmux via `wsl.exe -e which tmux`. This uses a non-interactive shell that doesn't load `~/.bashrc`, so user directories like `~/.local/bin/` aren't in PATH.
+
+**Fix**: Ensure tmux is installed system-wide (`/usr/bin/` via apt install)
 
 ### Sessions Show Wrong Path
 
@@ -255,3 +264,80 @@ Use `postCommands` to run commands when creating new sessions:
 ```
 
 Note: Commands only run on session creation, not when attaching.
+
+## Zellij Alternative
+
+[Zellij](https://zellij.dev/) is a modern terminal multiplexer that can be used instead of (or alongside) tmux.
+
+### Why Zellij?
+
+- **Modern UI** - Built-in status bar, tab bar, and pane borders
+- **WebAssembly plugins** - Extensible with WASM plugins
+- **Better defaults** - More intuitive out of the box
+- **Floating panes** - Pop-up terminal windows within sessions
+- **Works better with some TUI apps** - Some apps like OpenCode render better in Zellij than tmux
+
+### Quick Start with Zellij
+
+1. Install Zellij to a system-wide location:
+   ```bash
+   curl -L https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz | tar xz
+   sudo mv zellij /usr/local/bin/
+   ```
+
+2. When creating a task, choose "WSL + Zellij" as the profile
+
+3. The extension will attach-or-create Zellij sessions just like tmux
+
+### Zellij Sessions in Sidebar
+
+When Zellij sessions exist, an "Untracked Sessions (zellij)" section appears separately from tmux sessions:
+
+```
+▼ Untracked Sessions (3) tmux
+  ○ tmux-session-1
+  ○ tmux-session-2
+▼ Untracked Sessions (2) zellij
+  ○ zellij-session-1
+  ○ zellij-session-2
+```
+
+### Zellij Key Bindings (Default)
+
+| Keys | Action |
+|------|--------|
+| `Ctrl+P D` | Detach from session |
+| `Alt+N` | New pane |
+| `Alt+Arrow` | Navigate panes |
+| `Ctrl+P W` | Toggle floating pane |
+| `Ctrl+P C` | New tab |
+| `Ctrl+P N/P` | Next/Previous tab |
+
+### Zellij Commands
+
+```bash
+# List sessions
+zellij list-sessions
+
+# Attach to session
+zellij attach session-name
+
+# Create new session
+zellij -s session-name
+
+# Kill session
+zellij kill-session session-name
+```
+
+### Critical: Zellij PATH Requirement
+
+**Zellij must be installed to `/usr/local/bin/` or `/usr/bin/`** for detection to work in Windows Local mode.
+
+If you installed via `cargo install zellij` (goes to `~/.cargo/bin/`) or the official install script (goes to `~/.local/bin/`), session detection will only work in WSL Remote mode.
+
+**Fix:** Move Zellij to system-wide location:
+```bash
+sudo mv ~/.local/bin/zellij /usr/local/bin/
+# or
+sudo mv ~/.cargo/bin/zellij /usr/local/bin/
+```

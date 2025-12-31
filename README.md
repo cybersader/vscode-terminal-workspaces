@@ -38,6 +38,56 @@ A VS Code extension for managing terminal sessions with a visual sidebar interfa
 4. Choose a profile and configure your task
 5. Click the play button to launch your terminal
 
+## Requirements for tmux/Zellij
+
+**tmux and Zellij are Linux-only tools.** On Windows, they require WSL.
+
+| Requirement | Details |
+|-------------|---------|
+| **WSL** | Required on Windows. Install via `wsl --install` |
+| **tmux** | Install via `sudo apt install tmux` (goes to `/usr/bin/`) |
+| **Zellij** | Install to `/usr/local/bin/` (see below) |
+
+### VS Code Modes and Detection
+
+Terminal Workspaces detects tmux/Zellij sessions in **two VS Code modes**:
+
+| VS Code Mode | How to Enter | Detection Method |
+|--------------|--------------|------------------|
+| **WSL Remote** (recommended) | `code .` from WSL terminal, or "Remote-WSL: New Window" | Direct Linux commands |
+| **Windows Local** | Open VS Code from Start Menu, open Windows path | Via `wsl.exe` |
+
+Both modes work, but there's a **critical PATH requirement** for Windows Local mode:
+
+### Installation Requirements
+
+Tools must be installed to a **system-wide location** (`/usr/bin/` or `/usr/local/bin/`), NOT user directories like `~/.local/bin/`.
+
+**Why?** When VS Code runs in Windows Local mode, it uses `wsl.exe -e which zellij` to detect tools. This spawns a non-interactive shell that doesn't load `~/.bashrc`, so `~/.local/bin/` isn't in PATH.
+
+| Install Location | WSL Remote Mode | Windows Local Mode |
+|------------------|-----------------|-------------------|
+| `/usr/bin/` (apt install) | ✅ Works | ✅ Works |
+| `/usr/local/bin/` | ✅ Works | ✅ Works |
+| `~/.local/bin/` | ✅ Works | ❌ Not detected |
+| `~/.cargo/bin/` | ✅ Works | ❌ Not detected |
+
+### Installing tmux
+
+```bash
+sudo apt install tmux
+```
+
+### Installing Zellij (System-Wide)
+
+```bash
+# Download and install to /usr/local/bin/
+curl -L https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz | tar xz
+sudo mv zellij /usr/local/bin/
+```
+
+> ⚠️ **Already installed to ~/.local/bin/?** Move it: `sudo mv ~/.local/bin/zellij /usr/local/bin/`
+
 ## Keyboard Shortcuts
 
 | Shortcut | Action |

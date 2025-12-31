@@ -14,13 +14,23 @@ export interface TmuxSessionData {
     session: TmuxSession;
 }
 
-export type TreeItemData = TaskItem | TmuxSessionsHeader | TmuxSessionData;
+export interface ZellijSessionsHeader {
+    type: 'zellijSessionsHeader';
+}
+
+export interface ZellijSessionData {
+    type: 'zellijSession';
+    session: ZellijSession;
+}
+
+export type TreeItemData = TaskItem | TmuxSessionsHeader | TmuxSessionData | ZellijSessionsHeader | ZellijSessionData;
 
 export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TaskTreeItem | undefined | null | void> = new vscode.EventEmitter<TaskTreeItem | undefined | null | void>();
     readonly onDidChangeTreeData: vscode.Event<TaskTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-    private cachedUntrackedSessions: TmuxSession[] = [];
+    private cachedUntrackedTmuxSessions: TmuxSession[] = [];
+    private cachedUntrackedZellijSessions: ZellijSession[] = [];
 
     // Cache of active tmux session names (refreshed on each tree refresh)
     // Used to verify if a tmux session actually exists vs just a VS Code terminal
@@ -39,7 +49,15 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
      * Refresh tmux sessions specifically
      */
     refreshTmuxSessions(): void {
-        this.cachedUntrackedSessions = []; // Clear cache to force refresh
+        this.cachedUntrackedTmuxSessions = []; // Clear cache to force refresh
+        this._onDidChangeTreeData.fire();
+    }
+
+    /**
+     * Refresh zellij sessions specifically
+     */
+    refreshZellijSessions(): void {
+        this.cachedUntrackedZellijSessions = []; // Clear cache to force refresh
         this._onDidChangeTreeData.fire();
     }
 
@@ -58,13 +76,20 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             const items: TaskTreeItem[] = [];
 
             // Check for untracked tmux sessions
-            const untrackedSessions = this.getUntrackedSessions();
-            if (untrackedSessions.length > 0) {
-                items.push(this.createTmuxSessionsHeader(untrackedSessions.length));
+            const untrackedTmuxSessions = this.getUntrackedTmuxSessions();
+            if (untrackedTmuxSessions.length > 0) {
+                items.push(this.createTmuxSessionsHeader(untrackedTmuxSessions.length));
+            }
+
+            // Check for untracked zellij sessions
+            const untrackedZellijSessions = this.getUntrackedZellijSessions();
+            if (untrackedZellijSessions.length > 0) {
+                items.push(this.createZellijSessionsHeader(untrackedZellijSessions.length));
             }
 
             // Regular tasks
-            if (config.items.length === 0 && untrackedSessions.length === 0) {
+            const hasUntrackedSessions = untrackedTmuxSessions.length > 0 || untrackedZellijSessions.length > 0;
+            if (config.items.length === 0 && !hasUntrackedSessions) {
                 return [this.createPlaceholderItem()];
             }
 
@@ -74,7 +99,12 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
         // Children of tmux sessions header
         if (element.itemData && 'type' in element.itemData && element.itemData.type === 'tmuxSessionsHeader') {
-            return this.getUntrackedSessions().map(session => this.createTmuxSessionItem(session));
+            return this.getUntrackedTmuxSessions().map(session => this.createTmuxSessionItem(session));
+        }
+
+        // Children of zellij sessions header
+        if (element.itemData && 'type' in element.itemData && element.itemData.type === 'zellijSessionsHeader') {
+            return this.getUntrackedZellijSessions().map(session => this.createZellijSessionItem(session));
         }
 
         // Children of a folder
@@ -89,7 +119,7 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
     /**
      * Get untracked tmux sessions (sessions not mapped to tasks)
      */
-    getUntrackedSessions(): TmuxSession[] {
+    getUntrackedTmuxSessions(): TmuxSession[] {
         // Get all task names that might be tmux sessions
         const flatTasks = this.configManager.flattenTasks();
         const trackedNames: string[] = [];
@@ -109,6 +139,35 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         }
 
         return TmuxManager.getUntrackedSessions(trackedNames);
+    }
+
+    /**
+     * Get untracked zellij sessions (sessions not mapped to tasks)
+     */
+    getUntrackedZellijSessions(): ZellijSession[] {
+        if (!ZellijManager.isAvailable()) {
+            return [];
+        }
+
+        // Get all task names that might be zellij sessions
+        const flatTasks = this.configManager.flattenTasks();
+        const trackedNames: string[] = [];
+
+        for (const ft of flatTasks) {
+            // Check if task uses zellij
+            const profile = this.configManager.getProfile(ft.task.profileId || 'wsl-default');
+            if (profile?.zellij?.enabled === true || ft.task.overrides?.zellij?.enabled === true) {
+                // Use custom session name if set, otherwise task name
+                // IMPORTANT: Sanitize the name the same way configManager does when creating sessions
+                const rawSessionName = ft.task.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || ft.task.name;
+                const sanitizedSessionName = rawSessionName
+                    .replace(/[^a-zA-Z0-9_-]/g, '_')
+                    .substring(0, 50);
+                trackedNames.push(sanitizedSessionName);
+            }
+        }
+
+        return ZellijManager.getUntrackedSessions(trackedNames);
     }
 
     getParent(element: TaskTreeItem): vscode.ProviderResult<TaskTreeItem> {
@@ -368,6 +427,73 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         }
 
         return item;
+    }
+
+    private createZellijSessionsHeader(count: number): TaskTreeItem {
+        const item = new TaskTreeItem(
+            `Untracked Sessions (${count})`,
+            vscode.TreeItemCollapsibleState.Collapsed,
+            { type: 'zellijSessionsHeader' } as ZellijSessionsHeader
+        );
+
+        // Set unique ID to preserve expansion state
+        item.id = 'zellij-sessions-header';
+        // Use a distinct icon with color to differentiate from regular folders
+        item.iconPath = new vscode.ThemeIcon('broadcast', new vscode.ThemeColor('terminal.ansiCyan'));
+        item.contextValue = 'zellijSessionsHeader';
+        item.tooltip = `${count} zellij session(s) not linked to tasks.\nClick to expand, then import sessions as tasks.`;
+        item.description = 'zellij';
+
+        return item;
+    }
+
+    private createZellijSessionItem(session: ZellijSession): TaskTreeItem {
+        const item = new TaskTreeItem(
+            session.name,
+            vscode.TreeItemCollapsibleState.None,
+            { type: 'zellijSession', session } as ZellijSessionData
+        );
+
+        // Set unique ID to preserve state across refreshes
+        item.id = `zellij-session-${session.name}`;
+
+        // Check if there's an active terminal attached to this zellij session
+        const isActive = this.isTerminalActive(session.name) || this.isZellijTerminalActive(session.name);
+        const iconColor = isActive
+            ? new vscode.ThemeColor('terminal.ansiGreen')
+            : new vscode.ThemeColor('disabledForeground');
+        item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
+        item.contextValue = 'zellijSession';
+        item.description = session.path || '';
+        item.tooltip = [
+            `Session: ${session.name}`,
+            session.path ? `Path: ${session.path}` : '',
+            '',
+            'Right-click to attach or import as task'
+        ].filter(l => l).join('\n');
+
+        // Only attach on click if setting is enabled
+        const clickToAttach = vscode.workspace.getConfiguration('terminalWorkspaces').get<boolean>('zellijClickToAttach', false);
+        if (clickToAttach) {
+            item.command = {
+                command: 'terminalWorkspaces.attachZellijSession',
+                title: 'Attach to Session',
+                arguments: [session]
+            };
+        }
+
+        return item;
+    }
+
+    /**
+     * Check if there's an active terminal for a zellij session
+     */
+    private isZellijTerminalActive(sessionName: string): boolean {
+        const terminals = vscode.window.terminals;
+        return terminals.some(terminal => {
+            const terminalName = terminal.name;
+            return terminalName === `zellij: ${sessionName}`;
+        });
     }
 
     private shortenPath(fullPath: string): string {

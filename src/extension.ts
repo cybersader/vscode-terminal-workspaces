@@ -2,9 +2,10 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './configManager';
-import { TerminalTasksProvider, TaskTreeItem, TaskConfigDialog, FolderQuickPick, TmuxSessionData } from './terminalWorkspacesProvider';
+import { TerminalTasksProvider, TaskTreeItem, TaskConfigDialog, FolderQuickPick, TmuxSessionData, ZellijSessionData } from './terminalWorkspacesProvider';
 import { TerminalTaskItem, TaskFolder } from './types';
 import { TmuxManager, TmuxSession } from './tmuxManager';
+import { ZellijManager, ZellijSession } from './zellijManager';
 
 let treeDataProvider: TerminalTasksProvider;
 let configManager: ConfigManager;
@@ -1292,7 +1293,11 @@ export function activate(context: vscode.ExtensionContext) {
 
             let sessionName: string;
 
-            if (item.itemData.type === 'task') {
+            if (item.itemData.type === 'zellijSession') {
+                // Untracked zellij session
+                const sessionData = item.itemData as ZellijSessionData;
+                sessionName = sessionData.session.name;
+            } else if (item.itemData.type === 'task') {
                 // Task - check if it uses zellij mode
                 const task = item.itemData as TerminalTaskItem;
 
@@ -1388,6 +1393,279 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    const attachZellijSessionCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.attachZellijSession',
+        async (sessionOrItem: ZellijSession | TaskTreeItem) => {
+            let session: ZellijSession | undefined;
+
+            // Handle both direct session object and TaskTreeItem
+            if (sessionOrItem && 'itemData' in sessionOrItem) {
+                // It's a TaskTreeItem from the tree view
+                const item = sessionOrItem as TaskTreeItem;
+                if (item.itemData?.type === 'zellijSession') {
+                    session = (item.itemData as ZellijSessionData).session;
+                }
+            } else if (sessionOrItem && 'name' in sessionOrItem) {
+                // It's a direct ZellijSession object
+                session = sessionOrItem as ZellijSession;
+            }
+
+            if (!session) {
+                vscode.window.showErrorMessage('No zellij session selected');
+                return;
+            }
+
+            // Check if terminal with this name already exists
+            const terminalName = `zellij: ${session.name}`;
+            const existingTerminal = findTerminalByName(terminalName);
+            if (existingTerminal) {
+                // Reuse existing terminal - just show it
+                try {
+                    existingTerminal.show();
+                    return;
+                } catch {
+                    // Terminal was disposed, fall through to create a new one
+                }
+            }
+
+            // Create terminal - don't set cwd since zellij will handle the working directory
+            const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
+            const terminal = vscode.window.createTerminal({
+                name: terminalName,
+                location: terminalLocation === 'editor'
+                    ? vscode.TerminalLocation.Editor
+                    : vscode.TerminalLocation.Panel
+            });
+
+            terminal.show();
+
+            // Send the attach command
+            const isRemoteWSL = vscode.env.remoteName === 'wsl';
+            if (isRemoteWSL) {
+                terminal.sendText(ZellijManager.getAttachCommand(session.name));
+            } else {
+                // On Windows, need to go through WSL
+                terminal.sendText(`wsl.exe -e bash -c "${ZellijManager.getAttachCommand(session.name)}"`);
+            }
+        }
+    );
+
+    const importZellijSessionCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.importZellijSession',
+        async (item: TaskTreeItem) => {
+            if (!item?.itemData || item.itemData.type !== 'zellijSession') {
+                return;
+            }
+
+            // Check for workspace folder
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders || workspaceFolders.length === 0) {
+                vscode.window.showErrorMessage('Please open a folder first before importing sessions');
+                return;
+            }
+
+            const sessionData = item.itemData as ZellijSessionData;
+            const session = sessionData.session;
+
+            // Ask for task name
+            const name = await vscode.window.showInputBox({
+                prompt: 'Task name for this session',
+                value: session.name,
+                validateInput: value => value.trim() ? null : 'Name cannot be empty'
+            });
+
+            if (!name) {
+                return;
+            }
+
+            // Use session path if available, otherwise use workspace folder
+            // Convert Windows path to WSL path if needed
+            let taskPath = session.path;
+            if (!taskPath) {
+                const wsPath = workspaceFolders[0].uri.fsPath;
+                // Convert Windows path to WSL path if needed
+                if (process.platform === 'win32' || vscode.env.remoteName === 'wsl') {
+                    const match = wsPath.match(/^([A-Za-z]):\\(.*)$/);
+                    if (match) {
+                        taskPath = `/mnt/${match[1].toLowerCase()}/${match[2].replace(/\\/g, '/')}`;
+                    } else {
+                        taskPath = wsPath;
+                    }
+                } else {
+                    taskPath = wsPath;
+                }
+            }
+
+            try {
+                await configManager.addTask({
+                    name,
+                    path: taskPath,
+                    profileId: 'wsl-zellij',
+                    overrides: {
+                        zellij: {
+                            enabled: true,
+                            mode: 'attach-or-create',
+                            sessionName: session.name
+                        }
+                    }
+                });
+
+                treeDataProvider.refresh();
+                vscode.window.showInformationMessage(`Imported "${session.name}" as task "${name}"`);
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to import session: ${error}`);
+            }
+        }
+    );
+
+    const importZellijSessionsCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.importZellijSessions',
+        async () => {
+            // Check for workspace folder
+            const workspaceFolders = vscode.workspace.workspaceFolders;
+            if (!workspaceFolders || workspaceFolders.length === 0) {
+                vscode.window.showErrorMessage('Please open a folder first before importing sessions');
+                return;
+            }
+
+            if (!ZellijManager.isAvailable()) {
+                vscode.window.showWarningMessage('zellij is not available in this environment');
+                return;
+            }
+
+            const sessions = ZellijManager.getSessions();
+            if (sessions.length === 0) {
+                vscode.window.showInformationMessage('No zellij sessions found');
+                return;
+            }
+
+            // Get existing task names to mark which are already tracked
+            const flatTasks = configManager.flattenTasks();
+            const trackedNames = new Set<string>();
+            for (const ft of flatTasks) {
+                const profile = configManager.getProfile(ft.task.profileId || 'wsl-default');
+                if (profile?.zellij?.enabled === true || ft.task.overrides?.zellij?.enabled === true) {
+                    const sessionName = ft.task.overrides?.zellij?.sessionName || ft.task.name;
+                    trackedNames.add(sessionName.toLowerCase());
+                }
+            }
+
+            // Build quick pick items
+            const items = sessions.map(session => ({
+                label: session.name,
+                description: session.path || '',
+                detail: trackedNames.has(session.name.toLowerCase())
+                    ? '$(check) Already tracked'
+                    : '$(circle-outline) Untracked',
+                picked: !trackedNames.has(session.name.toLowerCase()),
+                session
+            }));
+
+            const selected = await vscode.window.showQuickPick(items, {
+                placeHolder: 'Select zellij sessions to import as tasks',
+                canPickMany: true
+            });
+
+            if (!selected || selected.length === 0) {
+                return;
+            }
+
+            // Filter out already tracked sessions
+            const toImport = selected.filter(s => !trackedNames.has(s.session.name.toLowerCase()));
+
+            if (toImport.length === 0) {
+                vscode.window.showInformationMessage('All selected sessions are already tracked');
+                return;
+            }
+
+            // Get default path for sessions without path info
+            // Convert Windows path to WSL path if needed
+            let defaultPath: string;
+            const wsPath = workspaceFolders[0].uri.fsPath;
+            if (process.platform === 'win32' || vscode.env.remoteName === 'wsl') {
+                const match = wsPath.match(/^([A-Za-z]):\\(.*)$/);
+                if (match) {
+                    defaultPath = `/mnt/${match[1].toLowerCase()}/${match[2].replace(/\\/g, '/')}`;
+                } else {
+                    defaultPath = wsPath;
+                }
+            } else {
+                defaultPath = wsPath;
+            }
+
+            // Import selected sessions
+            let imported = 0;
+            for (const item of toImport) {
+                try {
+                    await configManager.addTask({
+                        name: item.session.name,
+                        path: item.session.path || defaultPath,
+                        profileId: 'wsl-zellij',
+                        overrides: {
+                            zellij: {
+                                enabled: true,
+                                mode: 'attach-or-create',
+                                sessionName: item.session.name
+                            }
+                        }
+                    });
+                    imported++;
+                } catch (error) {
+                    console.error(`Failed to import session ${item.session.name}:`, error);
+                }
+            }
+
+            treeDataProvider.refresh();
+            vscode.window.showInformationMessage(`Imported ${imported} zellij session(s) as tasks`);
+        }
+    );
+
+    const attachAllZellijSessionsCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.attachAllZellijSessions',
+        async () => {
+            if (!ZellijManager.isAvailable()) {
+                vscode.window.showWarningMessage('zellij is not available in this environment');
+                return;
+            }
+
+            const untrackedSessions = treeDataProvider.getUntrackedZellijSessions();
+            if (untrackedSessions.length === 0) {
+                vscode.window.showInformationMessage('No untracked zellij sessions to attach');
+                return;
+            }
+
+            const isRemoteWSL = vscode.env.remoteName === 'wsl';
+
+            const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
+
+            for (const session of untrackedSessions) {
+                const terminal = vscode.window.createTerminal({
+                    name: `zellij: ${session.name}`,
+                    location: terminalLocation === 'editor'
+                        ? vscode.TerminalLocation.Editor
+                        : vscode.TerminalLocation.Panel
+                });
+
+                terminal.show();
+
+                if (isRemoteWSL) {
+                    terminal.sendText(ZellijManager.getAttachCommand(session.name));
+                } else {
+                    terminal.sendText(`wsl.exe -e bash -c "${ZellijManager.getAttachCommand(session.name)}"`);
+                }
+            }
+
+            vscode.window.showInformationMessage(`Attached to ${untrackedSessions.length} zellij session(s)`);
+        }
+    );
+
+    const refreshZellijSessionsCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.refreshZellijSessions',
+        () => {
+            treeDataProvider.refreshZellijSessions();
+        }
+    );
+
     // =========================================================================
     // SEARCH TASKS
     // =========================================================================
@@ -1446,7 +1724,7 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
-            const untrackedSessions = treeDataProvider.getUntrackedSessions();
+            const untrackedSessions = treeDataProvider.getUntrackedTmuxSessions();
             if (untrackedSessions.length === 0) {
                 vscode.window.showInformationMessage('No untracked tmux sessions to attach');
                 return;
@@ -1606,6 +1884,11 @@ export function activate(context: vscode.ExtensionContext) {
         killTmuxSessionCommand,
         killTmuxSessionFromTerminalCommand,
         killZellijSessionCommand,
+        attachZellijSessionCommand,
+        importZellijSessionCommand,
+        importZellijSessionsCommand,
+        attachAllZellijSessionsCommand,
+        refreshZellijSessionsCommand,
         configWatcher
     );
 }

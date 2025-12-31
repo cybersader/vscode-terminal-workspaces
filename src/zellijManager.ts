@@ -39,19 +39,22 @@ export class ZellijManager {
                 // Already in WSL
                 output = execSync('zellij list-sessions 2>/dev/null || true', {
                     encoding: 'utf8',
-                    stdio: 'pipe'
+                    stdio: 'pipe',
+                    timeout: 5000
                 });
             } else if (process.platform === 'win32') {
                 // On Windows, run through WSL
                 output = execSync('wsl.exe -e bash -c "zellij list-sessions 2>/dev/null || true"', {
                     encoding: 'utf8',
-                    stdio: 'pipe'
+                    stdio: 'pipe',
+                    timeout: 5000
                 });
             } else {
                 // Native Linux/macOS
                 output = execSync('zellij list-sessions 2>/dev/null || true', {
                     encoding: 'utf8',
-                    stdio: 'pipe'
+                    stdio: 'pipe',
+                    timeout: 5000
                 });
             }
 

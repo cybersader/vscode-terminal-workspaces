@@ -44,8 +44,9 @@ vsce package
 src/
 ├── extension.ts              # Entry point, command registration, activation
 ├── configManager.ts          # CRUD for terminal-workspaces.json, tasks.json generation
-├── terminalWorkspacesProvider.ts  # Tree view UI, dialogs, tmux session display
+├── terminalWorkspacesProvider.ts  # Tree view UI, dialogs, tmux/zellij session display
 ├── tmuxManager.ts            # tmux detection, session management
+├── zellijManager.ts          # Zellij detection, session management
 ├── types.ts                  # TypeScript interfaces (discriminated unions)
 └── pathConverter.ts          # WSL <-> Windows path conversion
 ```
@@ -160,6 +161,19 @@ Terminal active status is checked in `isTerminalActive()` in terminalWorkspacesP
 
 ## Testing Guidance
 
+### CRITICAL: WSL vs Windows Mode Debugging
+
+**The extension only loads in ONE extension host.** When you press F5, the Extension Development Host runs in the same mode as your main VS Code window.
+
+| To Test This Mode | How to Start VS Code |
+|-------------------|---------------------|
+| **WSL Remote** | `code .` from WSL terminal |
+| **Windows Local** | Open VS Code from Windows Start Menu, open Windows path |
+
+**Common Mistake:** Starting in WSL mode, then clicking "Show Local" in Extension Development Host. The extension WON'T reload - close VS Code completely and reopen in the target mode.
+
+See `dev-docs/building.md` for full testing instructions.
+
 ### Manual Testing Checklist
 - [ ] Add task via Explorer context menu
 - [ ] Add task via sidebar + button
@@ -169,17 +183,21 @@ Terminal active status is checked in `isTerminalActive()` in terminalWorkspacesP
 - [ ] Move task to folder
 - [ ] Create nested folder structure
 - [ ] Import tmux session
+- [ ] Import zellij session
 - [ ] Kill tmux session (verify green indicator clears)
+- [ ] Kill zellij session (verify green indicator clears)
 - [ ] Terminal location: panel vs editor
 - [ ] Hover/inline buttons appear for both active and inactive tasks
+- [ ] **Test in BOTH WSL Remote and Windows Local modes**
 
 ### Edge Cases
 - Empty workspace (no .vscode folder)
 - Invalid terminal-workspaces.json (malformed JSON)
 - Path doesn't exist (with experimentalPathValidation on/off)
 - WSL path conversion (Windows host, WSL target)
-- tmux not available (non-WSL/Linux environment)
-- Name collision when importing tmux session
+- tmux/zellij not available (non-WSL/Linux environment)
+- tmux/zellij installed to `~/.local/bin/` (won't work in Windows Local mode)
+- Name collision when importing tmux/zellij session
 
 ### VS Code API Gotchas
 - Terminal CWD not exposed directly (use browse/workspace folders)

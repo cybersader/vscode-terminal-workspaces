@@ -71,6 +71,53 @@ npm run lint
 
 ## Testing
 
+### CRITICAL: WSL vs Windows Mode Debugging
+
+**This is the most important thing to understand when debugging this extension.**
+
+When you press F5 to debug, the Extension Development Host runs in the **same mode** as your main VS Code window:
+
+| Main Window Mode | Extension Development Host Mode | tmux/zellij Detection |
+|------------------|--------------------------------|----------------------|
+| WSL Remote | WSL Remote | Direct Linux commands |
+| Windows (Local) | Windows (Local) | Via `wsl.exe` |
+
+**The extension only loads in ONE extension host.** If you start debugging in WSL mode and then switch to Windows mode inside the Extension Development Host (via "Show Local" or "Reopen Folder Locally"), the extension **will not reload** in the new mode.
+
+#### To Test in WSL Remote Mode
+
+1. Open VS Code from WSL terminal: `code .` (from a WSL path)
+2. Or use "Remote-WSL: New Window" command
+3. Open the terminal-workspaces project folder
+4. Press F5 to debug
+5. Extension Development Host will be in WSL mode
+
+#### To Test in Windows Mode
+
+1. **Close all VS Code windows**
+2. Open VS Code from **Windows Start Menu** (NOT from WSL terminal)
+3. File → Open Folder → navigate using Windows path:
+   ```
+   C:\Users\YourName\path\to\terminal-workspaces
+   ```
+4. Press F5 to debug
+5. Extension Development Host will be in Windows mode
+
+**Quick Windows mode from PowerShell:**
+```powershell
+cd "C:\Users\Cybersader\Documents\path\to\terminal-workspaces"
+code .
+# Then press F5 in VS Code
+```
+
+#### Common Mistakes
+
+❌ **Don't:** Start in WSL, then click "Show Local" in Extension Development Host
+- The extension won't reload in Windows mode
+- tmux/zellij detection will fail silently
+
+✅ **Do:** Close VS Code completely and reopen in the target mode FIRST
+
 ### Manual Testing Checklist
 
 #### Core Features
@@ -98,6 +145,7 @@ npm run lint
 
 - [ ] WSL default profile creates correct terminal
 - [ ] WSL tmux profile attaches/creates sessions
+- [ ] WSL zellij profile attaches/creates sessions
 - [ ] PowerShell profile works (Windows only)
 - [ ] CMD profile works (Windows only)
 - [ ] Bash profile works (Linux/macOS)
@@ -105,13 +153,26 @@ npm run lint
 
 #### tmux Features
 
-- [ ] tmux sessions listed under "Untracked Sessions"
+- [ ] tmux sessions listed under "Untracked Sessions (tmux)"
 - [ ] Attach to untracked session via button
 - [ ] Attach to untracked session via context menu
 - [ ] Import session as task
+- [ ] Import all sessions
 - [ ] Attach all sessions
+- [ ] Kill session
 - [ ] Refresh sessions list
 - [ ] Click-to-attach setting respected
+
+#### Zellij Features
+
+- [ ] Zellij sessions listed under "Untracked Sessions (zellij)"
+- [ ] Attach to untracked session via button
+- [ ] Attach to untracked session via context menu
+- [ ] Import session as task
+- [ ] Import all sessions
+- [ ] Attach all sessions
+- [ ] Kill session
+- [ ] Refresh sessions list
 
 #### Settings
 
@@ -133,12 +194,41 @@ npm run lint
 
 ### Testing Environments
 
-| Environment | What to Test |
-|-------------|--------------|
-| Windows (native VS Code) | WSL launching, path conversion |
-| Windows (Remote-WSL) | Native WSL paths, tmux |
-| Linux | Native bash, tmux |
-| macOS | Native bash, tmux |
+**You must test in BOTH WSL and Windows modes separately!**
+
+| Environment | How to Enter | What to Test |
+|-------------|--------------|--------------|
+| Windows (native VS Code) | Open VS Code from Start Menu, open Windows path | WSL launching via `wsl.exe`, path conversion, tmux/zellij detection via WSL |
+| Windows (Remote-WSL) | `code .` from WSL terminal | Native WSL paths, direct tmux/zellij detection |
+| Linux | Native VS Code | Native bash, tmux/zellij |
+| macOS | Native VS Code | Native bash, tmux |
+
+### tmux/Zellij Requirements
+
+Both tmux and Zellij are **Linux-only** tools. On Windows, they run inside WSL and the extension detects them via `wsl.exe`.
+
+**Critical PATH requirement:** Tools must be installed to a system-wide location (`/usr/bin/` or `/usr/local/bin/`), NOT `~/.local/bin/`.
+
+Why? When VS Code runs `wsl.exe -e which zellij`, it uses a non-interactive shell that doesn't load `~/.bashrc`, so `~/.local/bin/` isn't in PATH.
+
+| Install Location | Works in WSL Mode | Works in Windows Mode |
+|------------------|-------------------|----------------------|
+| `/usr/bin/` (apt install) | ✅ | ✅ |
+| `/usr/local/bin/` | ✅ | ✅ |
+| `~/.local/bin/` | ✅ | ❌ |
+| `~/.cargo/bin/` | ✅ | ❌ |
+
+**Installing tmux (system-wide):**
+```bash
+sudo apt install tmux
+```
+
+**Installing Zellij (system-wide):**
+```bash
+# Download and install to /usr/local/bin/
+curl -L https://github.com/zellij-org/zellij/releases/latest/download/zellij-x86_64-unknown-linux-musl.tar.gz | tar xz
+sudo mv zellij /usr/local/bin/
+```
 
 ### Creating Test Fixtures
 
@@ -151,9 +241,19 @@ cd ~/ttm-test
 mkdir -p project-a project-b project-c
 mkdir -p deep/nested/folder/structure
 
-# Create test tmux sessions (if testing tmux)
+# Create test tmux sessions
 tmux new -d -s test-session-1
 tmux new -d -s test-session-2
+
+# Create test zellij sessions
+zellij -s test-zellij-1 &
+sleep 1
+zellij -s test-zellij-2 &
+sleep 1
+
+# Verify sessions exist
+tmux list-sessions
+zellij list-sessions
 ```
 
 ## Packaging
