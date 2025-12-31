@@ -121,6 +121,12 @@ When publishing a new version:
 7. Package: `vsce package`
 8. Publish: `vsce publish` (or upload .vsix manually to Marketplace)
 
+**WSL Note:** `vsce publish` may fail with auth errors in WSL. Run from PowerShell instead:
+```powershell
+cd "C:\Users\Cybersader\Documents\1 Projects, Workspaces\mcp-workflow-and-tech-stack\tools\terminal-workspaces"
+vsce publish
+```
+
 ### Adding a New Command
 
 1. Define command in package.json `contributes.commands`
