@@ -5,6 +5,28 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.1] - 2025-12-31
+
+### Added
+
+- **Yellow Indicator for Background Sessions** - Three-state status indicators for multiplexer tasks:
+  - **Green dot**: Session is running AND a VS Code terminal is attached
+  - **Yellow dot**: Session is running in background (no VS Code terminal attached)
+  - **Grey dot**: No session exists
+- Kill Session command now available for background sessions (yellow dot) in addition to active sessions
+
+### Fixed
+
+- **Imported Sessions Show Yellow Immediately** - Sessions imported from "Untracked Sessions" now correctly show yellow indicator immediately (session exists, no terminal attached)
+- **Session Name Matching** - Fixed mismatch between raw and sanitized session names when detecting session existence. Sessions with special characters (spaces, dots) now correctly detected
+- **Zellij Session Name Override** - Fixed bug where custom zellij session names (from task overrides) were ignored when generating attach/create commands
+
+### Changed
+
+- Refactored terminal state detection to separate session existence from VS Code terminal attachment
+- Added new context values (`terminalTaskTmuxBackground`, `terminalTaskZellijBackground`) for background sessions
+- Session tracking now matches both raw and sanitized names for better compatibility with imported sessions
+
 ## [0.6.0] - 2025-12-31
 
 ### Added
@@ -190,6 +212,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.6.1 | 2025-12-31 | Yellow dot for background sessions (session running, no terminal) |
+| 0.6.0 | 2025-12-31 | Zellij session discovery, Windows Local mode detection |
+| 0.5.1 | 2025-12-31 | Fix disposed terminal error on reattach |
 | 0.5.0 | 2025-12-30 | Zellij support, improved active indicator accuracy |
 | 0.4.5 | 2025-12-26 | Graceful handling of already-dead tmux sessions |
 | 0.4.4 | 2025-12-25 | Fix hover buttons on active tasks, AI agent docs |

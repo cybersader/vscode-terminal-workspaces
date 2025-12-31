@@ -129,12 +129,17 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             const profile = this.configManager.getProfile(ft.task.profileId || 'wsl-default');
             if (profile?.tmux?.enabled === true || ft.task.overrides?.tmux?.enabled === true) {
                 // Use custom session name if set, otherwise task name
-                // IMPORTANT: Sanitize the name the same way configManager does when creating sessions
                 const rawSessionName = ft.task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || ft.task.name;
                 const sanitizedSessionName = rawSessionName
                     .replace(/[^a-zA-Z0-9_-]/g, '_')
                     .substring(0, 50);
-                trackedNames.push(sanitizedSessionName);
+                // Track BOTH raw and sanitized names to handle:
+                // - Imported sessions (raw name matches the actual session)
+                // - Sessions created by extension (sanitized name matches what we create)
+                trackedNames.push(rawSessionName);
+                if (rawSessionName !== sanitizedSessionName) {
+                    trackedNames.push(sanitizedSessionName);
+                }
             }
         }
 
@@ -158,12 +163,17 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             const profile = this.configManager.getProfile(ft.task.profileId || 'wsl-default');
             if (profile?.zellij?.enabled === true || ft.task.overrides?.zellij?.enabled === true) {
                 // Use custom session name if set, otherwise task name
-                // IMPORTANT: Sanitize the name the same way configManager does when creating sessions
                 const rawSessionName = ft.task.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || ft.task.name;
                 const sanitizedSessionName = rawSessionName
                     .replace(/[^a-zA-Z0-9_-]/g, '_')
                     .substring(0, 50);
-                trackedNames.push(sanitizedSessionName);
+                // Track BOTH raw and sanitized names to handle:
+                // - Imported sessions (raw name matches the actual session)
+                // - Sessions created by extension (sanitized name matches what we create)
+                trackedNames.push(rawSessionName);
+                if (rawSessionName !== sanitizedSessionName) {
+                    trackedNames.push(sanitizedSessionName);
+                }
             }
         }
 
@@ -254,6 +264,44 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         });
     }
 
+    /**
+     * Check if a multiplexer session exists (regardless of VS Code terminal state)
+     * @param sessionName - The raw session name to check (as it appears in tmux/zellij)
+     * @param multiplexer - Which multiplexer to check ('tmux' or 'zellij')
+     * @returns true if the session exists in the background
+     */
+    private doesSessionExist(sessionName: string, multiplexer: 'tmux' | 'zellij'): boolean {
+        // Check against the raw session name (cache stores raw names from tmux/zellij, lowercased)
+        if (multiplexer === 'tmux') {
+            return this.activeTmuxSessions.has(sessionName.toLowerCase());
+        } else {
+            return this.activeZellijSessions.has(sessionName.toLowerCase());
+        }
+    }
+
+    /**
+     * Check if there's a VS Code terminal attached to a session (without checking session existence)
+     */
+    private isVSCodeTerminalAttached(taskName: string, sanitizedSessionName?: string): boolean {
+        const terminals = vscode.window.terminals;
+        return terminals.some(terminal => {
+            const terminalName = terminal.name;
+            const matches = terminalName === taskName ||
+                   terminalName === `Task - ${taskName}` ||
+                   terminalName === `tmux: ${taskName}` ||
+                   terminalName === `zellij: ${taskName}` ||
+                   terminalName.startsWith(`${taskName} `);
+
+            if (!matches && sanitizedSessionName && sanitizedSessionName !== taskName) {
+                return terminalName === `tmux: ${sanitizedSessionName}` ||
+                       terminalName === `zellij: ${sanitizedSessionName}` ||
+                       terminalName === sanitizedSessionName;
+            }
+
+            return matches;
+        });
+    }
+
     private itemsToTreeItems(items: TaskItem[], isChild: boolean = false): TaskTreeItem[] {
         return items.map(item => {
             if (item.type === 'folder') {
@@ -309,35 +357,74 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         const isZellij = !isTmux && (profile?.zellij?.enabled || task.overrides?.zellij?.enabled);
         const multiplexer: 'tmux' | 'zellij' | undefined = isTmux ? 'tmux' : isZellij ? 'zellij' : undefined;
 
-        // Calculate sanitized session name if this task uses a multiplexer
+        // Calculate session names if this task uses a multiplexer
+        // rawSessionName: the actual session name as it appears in tmux/zellij (for existence check)
+        // sanitizedSessionName: sanitized version for terminal name matching
+        let rawSessionName: string | undefined;
         let sanitizedSessionName: string | undefined;
         if (isTmux) {
-            const rawSessionName = task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || task.name;
+            rawSessionName = task.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || task.name;
             sanitizedSessionName = rawSessionName
                 .replace(/[^a-zA-Z0-9_-]/g, '_')
                 .substring(0, 50);
         } else if (isZellij) {
-            const rawSessionName = task.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || task.name;
+            rawSessionName = task.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || task.name;
             sanitizedSessionName = rawSessionName
                 .replace(/[^a-zA-Z0-9_-]/g, '_')
                 .substring(0, 50);
         }
 
-        // Check if there's an active terminal for this task
-        const isActive = this.isTerminalActive(task.name, sanitizedSessionName, multiplexer);
+        // Determine task state for icon color:
+        // - Green: VS Code terminal attached AND session exists (or non-multiplexer with terminal)
+        // - Yellow: Multiplexer session exists BUT no VS Code terminal attached (background session)
+        // - Grey: No session exists (or non-multiplexer task with no terminal)
+
+        let iconColor: vscode.ThemeColor;
+        let hasActiveSession = false;
+        let hasVSCodeTerminal = false;
+
+        if (multiplexer && rawSessionName && sanitizedSessionName) {
+            // Multiplexer task - check both session existence and terminal attachment
+            // Use rawSessionName for session existence (matches cache which stores raw names)
+            // Use sanitizedSessionName for terminal matching (terminals use sanitized names)
+            hasActiveSession = this.doesSessionExist(rawSessionName, multiplexer);
+            hasVSCodeTerminal = this.isVSCodeTerminalAttached(task.name, sanitizedSessionName);
+
+            if (hasActiveSession && hasVSCodeTerminal) {
+                // Green: Session exists AND terminal is attached
+                iconColor = new vscode.ThemeColor('terminal.ansiGreen');
+            } else if (hasActiveSession) {
+                // Yellow: Session exists but no terminal attached (background session)
+                iconColor = new vscode.ThemeColor('terminal.ansiYellow');
+            } else {
+                // Grey: No session exists
+                iconColor = new vscode.ThemeColor('disabledForeground');
+            }
+        } else {
+            // Non-multiplexer task - simple terminal check
+            hasVSCodeTerminal = this.isVSCodeTerminalAttached(task.name);
+            iconColor = hasVSCodeTerminal
+                ? new vscode.ThemeColor('terminal.ansiGreen')
+                : new vscode.ThemeColor('disabledForeground');
+        }
 
         // Use circle-filled for consistent alignment with tmux/zellij sessions
-        // Green when terminal is active, grey when inactive
-        const iconColor = isActive
-            ? new vscode.ThemeColor('terminal.ansiGreen')
-            : new vscode.ThemeColor('disabledForeground');
         item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
+
+        // For backward compatibility with isActive checks
+        const isActive = hasActiveSession && hasVSCodeTerminal;
 
         // Set contextValue - ALWAYS include base 'terminalTask' to ensure inline buttons show
         // Add 'MultiplexerActive' suffix when session is active for kill option
-        if ((isTmux || isZellij) && isActive) {
-            // multiplexer task with active session - show kill option
-            item.contextValue = isTmux ? 'terminalTaskTmuxActive' : 'terminalTaskZellijActive';
+        // Also add 'Background' context for sessions running without VS Code terminal
+        if (multiplexer && hasActiveSession) {
+            if (hasVSCodeTerminal) {
+                // multiplexer task with active session AND terminal - show kill option
+                item.contextValue = multiplexer === 'tmux' ? 'terminalTaskTmuxActive' : 'terminalTaskZellijActive';
+            } else {
+                // multiplexer task with background session (no terminal) - show kill option too
+                item.contextValue = multiplexer === 'tmux' ? 'terminalTaskTmuxBackground' : 'terminalTaskZellijBackground';
+            }
         } else {
             item.contextValue = 'terminalTask';
         }

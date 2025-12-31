@@ -485,8 +485,9 @@ export class ConfigManager {
         const wslPath = this.toWslPath(folderPath);
         const windowsPath = this.toWindowsPath(folderPath);
 
-        // Sanitize session name for tmux (alphanumeric, underscores, dashes only)
-        const sessionName = (profile.tmux?.sessionName || taskName)
+        // Sanitize session name for multiplexer (alphanumeric, underscores, dashes only)
+        // Check both tmux and zellij session names (they're mutually exclusive)
+        const sessionName = (profile.tmux?.sessionName || profile.zellij?.sessionName || taskName)
             .replace(/[^a-zA-Z0-9_-]/g, '_')
             .substring(0, 50);
 

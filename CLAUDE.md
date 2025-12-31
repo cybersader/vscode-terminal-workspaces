@@ -261,3 +261,21 @@ When onboarding to this codebase:
 - [tmux Integration](docs/tmux-integration.md) - Working with tmux
 - [Contributing](dev-docs/contributing.md) - Contribution workflow
 - [AI Agent Workflows](docs/ai-agent-workflows.md) - Using with AI coding tools
+
+## Future Ideas / Roadmap
+
+### Potential Features (not committed)
+
+1. **Multiplexer-specific indicator colors** - Instead of state-based colors (green/yellow/grey), use multiplexer-based colors:
+   - Zellij: Blue shades (bright=active, dim=background, grey=inactive)
+   - tmux: Yellow shades (bright=active, dim=background, grey=inactive)
+   - Pro: Visual distinction of which multiplexer at a glance
+   - Con: More complex, loses universal green=active meaning
+   - Decision: Kept state-based for simplicity; revisit if users request
+
+2. **Sidebar organization options** - More control over workspace ordering:
+   - Choose root task position (above/below folders)
+   - Custom folder ordering
+   - Drag-and-drop reordering
+
+3. **Session templates** - Save/restore window layouts within tmux/zellij sessions
