@@ -5,6 +5,12 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2025-12-31
+
+### Fixed
+
+- **Disposed Terminal Error** - Fixed "Terminal has already been disposed" error when re-running a task after terminating the VS Code terminal while a tmux/zellij session was still running in the background. Now gracefully creates a new terminal instead of failing.
+
 ## [0.5.0] - 2025-12-30
 
 ### Added

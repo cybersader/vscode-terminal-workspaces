@@ -473,9 +473,14 @@ export function activate(context: vscode.ExtensionContext) {
             // Check if terminal with this name already exists
             const existingTerminal = findTerminalByName(task.name);
             if (existingTerminal) {
-                // Reuse existing terminal - just show it
-                existingTerminal.show();
-                return;
+                // Try to reuse existing terminal - but it may have been disposed
+                // (e.g., if user terminated the VS Code terminal while tmux/zellij session still runs)
+                try {
+                    existingTerminal.show();
+                    return;
+                } catch {
+                    // Terminal was disposed, fall through to create a new one
+                }
             }
 
             // Create terminal directly in editor area

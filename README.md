@@ -154,6 +154,19 @@ VS Code's bottom panel only splits horizontally. For complex terminal layouts:
 
 **Pro tip:** Set `terminalLocation` to `"editor"` for full grid layouts. You lose "always at bottom" but gain the ability to split in any direction.
 
+#### Terminal Lock Icon
+
+You may notice a lock icon on terminal tabs in the editor area:
+
+| Icon | Meaning |
+|------|---------|
+| **Locked** | Terminal tab won't be reused. New terminals create duplicate tabs. |
+| **Unlocked** | VS Code can reuse this terminal tab when opening new terminals. |
+
+**To toggle:** Click the lock icon on the terminal tab.
+
+**Why this matters:** When `terminalLocation` is set to `"editor"`, VS Code may try to reuse existing terminal tabs. If you want each task to have its own persistent tab, keep them locked. Terminal Workspaces v0.4.5+ handles this automatically with improved terminal reuse logic.
+
 ### Companion Extensions
 
 These extensions pair well with Terminal Workspaces:
