@@ -98,7 +98,42 @@ export class TmuxManager {
      * Attach to a tmux session (returns command string)
      */
     static getAttachCommand(sessionName: string): string {
-        return `tmux attach-session -t '${sessionName}'`;
+        return `tmux attach-session -t '${this.escapeForShell(sessionName)}'`;
+    }
+
+    /**
+     * Kill a tmux session (returns command string)
+     */
+    static getKillCommand(sessionName: string): string {
+        return `tmux kill-session -t '${this.escapeForShell(sessionName)}'`;
+    }
+
+    /**
+     * Get the WSL-wrapped command for attaching to a session
+     * Used when running from Windows Local mode (not WSL Remote)
+     */
+    static getAttachCommandForWSL(sessionName: string): string {
+        const escaped = this.escapeForShell(sessionName);
+        return `wsl.exe -e bash -c "tmux attach-session -t '${escaped}'"`;
+    }
+
+    /**
+     * Get the WSL-wrapped command for killing a session
+     * Used when running from Windows Local mode (not WSL Remote)
+     */
+    static getKillCommandForWSL(sessionName: string): string {
+        const escaped = this.escapeForShell(sessionName);
+        return `wsl.exe -e bash -c "tmux kill-session -t '${escaped}'"`;
+    }
+
+    /**
+     * Escape a session name for use in a shell command
+     * Handles single quote escaping for bash single-quoted strings
+     */
+    private static escapeForShell(sessionName: string): string {
+        // For single-quoted strings in bash, escape single quotes by ending the quote,
+        // adding an escaped quote, and starting a new quote: ' -> '\''
+        return sessionName.replace(/'/g, "'\\''");
     }
 
     /**

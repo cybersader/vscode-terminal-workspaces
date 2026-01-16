@@ -4,7 +4,12 @@ import { execSync } from 'child_process';
 export interface ZellijSession {
     /** Session name */
     name: string;
-    /** Working directory (if available) */
+    /**
+     * Working directory (if available)
+     * Note: Zellij's list-sessions doesn't provide working directory info.
+     * Unlike tmux which has #{pane_current_path}, zellij sessions are
+     * imported with a fallback to the workspace folder.
+     */
     path?: string;
 }
 
@@ -100,14 +105,14 @@ export class ZellijManager {
      * Get command to attach to a zellij session
      */
     static getAttachCommand(sessionName: string): string {
-        return `zellij attach '${sessionName}'`;
+        return `zellij attach '${this.escapeForShell(sessionName)}'`;
     }
 
     /**
      * Get command to create a new zellij session
      */
     static getNewSessionCommand(sessionName: string): string {
-        return `zellij -s '${sessionName}'`;
+        return `zellij -s '${this.escapeForShell(sessionName)}'`;
     }
 
     /**
@@ -116,14 +121,62 @@ export class ZellijManager {
      * so we use a shell conditional
      */
     static getAttachOrCreateCommand(sessionName: string): string {
-        return `zellij attach '${sessionName}' 2>/dev/null || zellij -s '${sessionName}'`;
+        const escaped = this.escapeForShell(sessionName);
+        return `zellij attach '${escaped}' 2>/dev/null || zellij -s '${escaped}'`;
     }
 
     /**
      * Get command to kill a zellij session
+     * Note: kill-session terminates processes but leaves session in EXITED state
+     * (can be resurrected by attaching)
      */
     static getKillCommand(sessionName: string): string {
-        return `zellij kill-session '${sessionName}'`;
+        return `zellij kill-session '${this.escapeForShell(sessionName)}'`;
+    }
+
+    /**
+     * Get command to delete a zellij session
+     * Note: delete-session fully removes the session (cannot be resurrected)
+     */
+    static getDeleteCommand(sessionName: string): string {
+        return `zellij delete-session '${this.escapeForShell(sessionName)}'`;
+    }
+
+    /**
+     * Get the WSL-wrapped command for attaching to a session
+     * Used when running from Windows Local mode (not WSL Remote)
+     */
+    static getAttachCommandForWSL(sessionName: string): string {
+        const escaped = this.escapeForShell(sessionName);
+        return `wsl.exe -e bash -c "zellij attach '${escaped}'"`;
+    }
+
+    /**
+     * Get the WSL-wrapped command for killing a session
+     * Used when running from Windows Local mode (not WSL Remote)
+     */
+    static getKillCommandForWSL(sessionName: string): string {
+        const escaped = this.escapeForShell(sessionName);
+        return `wsl.exe -e bash -c "zellij kill-session '${escaped}'"`;
+    }
+
+    /**
+     * Get the WSL-wrapped command for deleting a session
+     * Used when running from Windows Local mode (not WSL Remote)
+     */
+    static getDeleteCommandForWSL(sessionName: string): string {
+        const escaped = this.escapeForShell(sessionName);
+        return `wsl.exe -e bash -c "zellij delete-session '${escaped}'"`;
+    }
+
+    /**
+     * Escape a session name for use in a shell command
+     * Handles single quote escaping for bash single-quoted strings
+     */
+    private static escapeForShell(sessionName: string): string {
+        // For single-quoted strings in bash, escape single quotes by ending the quote,
+        // adding an escaped quote, and starting a new quote: ' -> '\''
+        return sessionName.replace(/'/g, "'\\''");
     }
 
     private static isRemoteWSL(): boolean {

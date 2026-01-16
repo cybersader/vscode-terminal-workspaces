@@ -1044,8 +1044,8 @@ export function activate(context: vscode.ExtensionContext) {
             if (isRemoteWSL) {
                 terminal.sendText(TmuxManager.getAttachCommand(session.name));
             } else {
-                // On Windows, need to go through WSL
-                terminal.sendText(`wsl.exe -e bash -c "${TmuxManager.getAttachCommand(session.name)}"`);
+                // On Windows, need to go through WSL with proper escaping
+                terminal.sendText(TmuxManager.getAttachCommandForWSL(session.name));
             }
         }
     );
@@ -1158,23 +1158,20 @@ export function activate(context: vscode.ExtensionContext) {
                     }
                 }
 
-                // Kill the tmux session
-                // Escape any single quotes in session name for shell safety
-                const escapedSessionName = sessionName.replace(/'/g, "'\\''");
-
+                // Kill the tmux session using centralized command building
                 const { exec } = require('child_process');
-                let command: string;
 
                 // Determine how to run tmux based on environment
                 const isRemoteWSL = vscode.env.remoteName === 'wsl';
                 const isWindows = process.platform === 'win32';
 
+                let command: string;
                 if (isRemoteWSL || !isWindows) {
                     // In WSL or native Linux/macOS - run tmux directly
-                    command = `tmux kill-session -t '${escapedSessionName}'`;
+                    command = TmuxManager.getKillCommand(sessionName);
                 } else {
                     // On Windows (not in WSL) - go through wsl.exe
-                    command = `wsl.exe tmux kill-session -t "${sessionName}"`;
+                    command = TmuxManager.getKillCommandForWSL(sessionName);
                 }
 
                 exec(command, (error: Error | null) => {
@@ -1236,23 +1233,20 @@ export function activate(context: vscode.ExtensionContext) {
                 // Close the VS Code terminal
                 targetTerminal.dispose();
 
-                // Kill the tmux session
-                // Escape any single quotes in session name for shell safety
-                const escapedSessionName = sessionName.replace(/'/g, "'\\''");
-
+                // Kill the tmux session using centralized command building
                 const { exec } = require('child_process');
-                let command: string;
 
                 // Determine how to run tmux based on environment
                 const isRemoteWSL = vscode.env.remoteName === 'wsl';
                 const isWindows = process.platform === 'win32';
 
+                let command: string;
                 if (isRemoteWSL || !isWindows) {
                     // In WSL or native Linux/macOS - run tmux directly
-                    command = `tmux kill-session -t '${escapedSessionName}'`;
+                    command = TmuxManager.getKillCommand(sessionName);
                 } else {
                     // On Windows (not in WSL) - go through wsl.exe
-                    command = `wsl.exe tmux kill-session -t "${sessionName}"`;
+                    command = TmuxManager.getKillCommandForWSL(sessionName);
                 }
 
                 exec(command, (error: Error | null) => {
@@ -1349,29 +1343,28 @@ export function activate(context: vscode.ExtensionContext) {
                     }
                 }
 
-                // Kill the zellij session
-                // Escape any single quotes in session name for shell safety
-                const escapedSessionName = sessionName.replace(/'/g, "'\\''");
-
+                // Kill the zellij session using centralized command building
                 const { exec } = require('child_process');
-                let command: string;
 
                 // Determine how to run zellij based on environment
                 const isRemoteWSL = vscode.env.remoteName === 'wsl';
                 const isWindows = process.platform === 'win32';
 
+                let command: string;
                 if (isRemoteWSL || !isWindows) {
                     // In WSL or native Linux/macOS - run zellij directly
-                    command = `zellij kill-session '${escapedSessionName}'`;
+                    command = ZellijManager.getKillCommand(sessionName);
                 } else {
                     // On Windows (not in WSL) - go through wsl.exe
-                    command = `wsl.exe zellij kill-session "${sessionName}"`;
+                    command = ZellijManager.getKillCommandForWSL(sessionName);
                 }
 
                 exec(command, (error: Error | null) => {
                     // Handle "session not found" as success - session is already gone
-                    const isSessionNotFound = error?.message?.includes('not found') ||
-                                              error?.message?.includes('No such');
+                    // Zellij error messages: "session not found", "No zellij server listening"
+                    const isSessionNotFound = error?.message?.includes('session not found') ||
+                                              error?.message?.includes('No zellij server listening') ||
+                                              error?.message?.includes("doesn't exist");
 
                     if (error && !isSessionNotFound) {
                         vscode.window.showErrorMessage(`Failed to kill session: ${error.message}`);
@@ -1389,6 +1382,107 @@ export function activate(context: vscode.ExtensionContext) {
                 });
             } catch (error) {
                 vscode.window.showErrorMessage(`Failed to kill session: ${error}`);
+            }
+        }
+    );
+
+    const deleteZellijSessionCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.deleteZellijSession',
+        async (item: TaskTreeItem) => {
+            if (!item?.itemData) {
+                return;
+            }
+
+            let sessionName: string;
+
+            if (item.itemData.type === 'zellijSession') {
+                // Untracked zellij session
+                const sessionData = item.itemData as ZellijSessionData;
+                sessionName = sessionData.session.name;
+            } else if (item.itemData.type === 'task') {
+                // Task - check if it uses zellij mode
+                const task = item.itemData as TerminalTaskItem;
+
+                // Get the profile to check if it's zellij
+                const profile = task.profileId ? configManager.getProfile(task.profileId) : undefined;
+                const isZellij = profile?.zellij?.enabled || task.overrides?.zellij?.enabled;
+
+                if (!isZellij) {
+                    vscode.window.showWarningMessage('This task does not use zellij mode');
+                    return;
+                }
+
+                // Get the zellij session name (custom or task name)
+                const rawSessionName = task.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || task.name;
+                sessionName = rawSessionName
+                    .replace(/[^a-zA-Z0-9_-]/g, '_')
+                    .substring(0, 50);
+            } else {
+                return;
+            }
+
+            // Confirm before deleting (more serious than kill)
+            const confirm = await vscode.window.showWarningMessage(
+                `Permanently delete zellij session "${sessionName}"? This cannot be undone.`,
+                { modal: true },
+                'Delete Session'
+            );
+
+            if (confirm !== 'Delete Session') {
+                return;
+            }
+
+            try {
+                // Close any VS Code terminal attached to this session
+                const zellijTerminalName = `zellij: ${sessionName}`;
+                let existingTerminal = findTerminalByName(zellijTerminalName);
+                if (existingTerminal) {
+                    existingTerminal.dispose();
+                }
+
+                // Also try to find terminal by the original task name
+                if (item.itemData?.type === 'task') {
+                    const task = item.itemData as TerminalTaskItem;
+                    const taskTerminal = findTerminalByName(task.name);
+                    if (taskTerminal) {
+                        taskTerminal.dispose();
+                    }
+                }
+
+                // Delete the zellij session using centralized command building
+                const { exec } = require('child_process');
+
+                const isRemoteWSL = vscode.env.remoteName === 'wsl';
+                const isWindows = process.platform === 'win32';
+
+                let command: string;
+                if (isRemoteWSL || !isWindows) {
+                    command = ZellijManager.getDeleteCommand(sessionName);
+                } else {
+                    command = ZellijManager.getDeleteCommandForWSL(sessionName);
+                }
+
+                exec(command, (error: Error | null) => {
+                    // Handle "session not found" as success - session is already gone
+                    const isSessionNotFound = error?.message?.includes('session not found') ||
+                                              error?.message?.includes('No zellij server listening') ||
+                                              error?.message?.includes("doesn't exist");
+
+                    if (error && !isSessionNotFound) {
+                        vscode.window.showErrorMessage(`Failed to delete session: ${error.message}`);
+                    } else {
+                        if (isSessionNotFound) {
+                            vscode.window.showInformationMessage(`Session "${sessionName}" already deleted`);
+                        } else {
+                            vscode.window.showInformationMessage(`Deleted zellij session "${sessionName}"`);
+                        }
+                    }
+                    setTimeout(() => {
+                        treeDataProvider.refresh();
+                    }, 200);
+                });
+            } catch (error) {
+                vscode.window.showErrorMessage(`Failed to delete session: ${error}`);
             }
         }
     );
@@ -1444,8 +1538,8 @@ export function activate(context: vscode.ExtensionContext) {
             if (isRemoteWSL) {
                 terminal.sendText(ZellijManager.getAttachCommand(session.name));
             } else {
-                // On Windows, need to go through WSL
-                terminal.sendText(`wsl.exe -e bash -c "${ZellijManager.getAttachCommand(session.name)}"`);
+                // On Windows, need to go through WSL with proper escaping
+                terminal.sendText(ZellijManager.getAttachCommandForWSL(session.name));
             }
         }
     );
@@ -1651,7 +1745,8 @@ export function activate(context: vscode.ExtensionContext) {
                 if (isRemoteWSL) {
                     terminal.sendText(ZellijManager.getAttachCommand(session.name));
                 } else {
-                    terminal.sendText(`wsl.exe -e bash -c "${ZellijManager.getAttachCommand(session.name)}"`);
+                    // On Windows, need to go through WSL with proper escaping
+                    terminal.sendText(ZellijManager.getAttachCommandForWSL(session.name));
                 }
             }
 
@@ -1748,7 +1843,8 @@ export function activate(context: vscode.ExtensionContext) {
                 if (isRemoteWSL) {
                     terminal.sendText(TmuxManager.getAttachCommand(session.name));
                 } else {
-                    terminal.sendText(`wsl.exe -e bash -c "${TmuxManager.getAttachCommand(session.name)}"`);
+                    // On Windows, need to go through WSL with proper escaping
+                    terminal.sendText(TmuxManager.getAttachCommandForWSL(session.name));
                 }
             }
 
@@ -1884,6 +1980,7 @@ export function activate(context: vscode.ExtensionContext) {
         killTmuxSessionCommand,
         killTmuxSessionFromTerminalCommand,
         killZellijSessionCommand,
+        deleteZellijSessionCommand,
         attachZellijSessionCommand,
         importZellijSessionCommand,
         importZellijSessionsCommand,

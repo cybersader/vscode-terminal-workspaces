@@ -5,6 +5,27 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.6.2] - 2025-01-16
+
+### Added
+
+- **Delete Zellij Session Command** - New "Delete Zellij Session" option in context menu that permanently removes zellij sessions (vs "Kill" which leaves them in EXITED state)
+  - Zellij's `kill-session` only stops processes, leaving session as EXITED (can resurrect by attaching)
+  - New `delete-session` fully removes the session from zellij
+  - Both options available in right-click menu for zellij tasks and untracked sessions
+
+### Fixed
+
+- **Zellij Error Detection** - Fixed overly generic error detection that could match unrelated errors. Now uses zellij-specific messages (`"session not found"`, `"No zellij server listening"`)
+- **Shell Escaping** - Centralized shell escaping in manager classes for session names with special characters (quotes, spaces)
+- **Consistent Command Building** - Kill and attach commands now use centralized methods in TmuxManager and ZellijManager instead of inline string building
+
+### Changed
+
+- Added `getKillCommand()` to TmuxManager for consistency with ZellijManager
+- Added `*ForWSL()` variants to both managers for proper Windows Local mode command wrapping
+- Kill Zellij Session icon changed from trash to stop icon to differentiate from Delete
+
 ## [0.6.1] - 2025-12-31
 
 ### Added
@@ -212,6 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.6.2 | 2025-01-16 | Delete Zellij Session command, shell escaping fixes |
 | 0.6.1 | 2025-12-31 | Yellow dot for background sessions (session running, no terminal) |
 | 0.6.0 | 2025-12-31 | Zellij session discovery, Windows Local mode detection |
 | 0.5.1 | 2025-12-31 | Fix disposed terminal error on reattach |

@@ -2,7 +2,7 @@
   "name": "terminal-workspaces",
   "displayName": "Terminal Workspaces",
   "description": "Manage terminal sessions with a sidebar GUI. Supports WSL, tmux, Zellij, PowerShell, nested folders, profiles, and more. Perfect for multi-project and agentic coding workflows.",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "publisher": "cybersader",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -199,6 +199,11 @@
       {
         "command": "terminalWorkspaces.killZellijSession",
         "title": "Kill Zellij Session",
+        "icon": "$(debug-stop)"
+      },
+      {
+        "command": "terminalWorkspaces.deleteZellijSession",
+        "title": "Delete Zellij Session",
         "icon": "$(trash)"
       },
       {
@@ -480,6 +485,11 @@
           "group": "3_kill@1"
         },
         {
+          "command": "terminalWorkspaces.deleteZellijSession",
+          "when": "view == terminalWorkspacesView && (viewItem == terminalTaskZellijActive || viewItem == terminalTaskZellijBackground)",
+          "group": "3_kill@2"
+        },
+        {
           "command": "terminalWorkspaces.attachAllZellijSessions",
           "when": "view == terminalWorkspacesView && viewItem == zellijSessionsHeader",
           "group": "inline@1"
@@ -523,6 +533,11 @@
           "command": "terminalWorkspaces.killZellijSession",
           "when": "view == terminalWorkspacesView && viewItem == zellijSession",
           "group": "3_kill@1"
+        },
+        {
+          "command": "terminalWorkspaces.deleteZellijSession",
+          "when": "view == terminalWorkspacesView && viewItem == zellijSession",
+          "group": "3_kill@2"
         }
       ]
     },
