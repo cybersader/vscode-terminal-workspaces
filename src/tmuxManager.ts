@@ -114,7 +114,7 @@ export class TmuxManager {
      */
     static getAttachCommandForWSL(sessionName: string): string {
         const escaped = this.escapeForShell(sessionName);
-        return `wsl.exe -e bash -c "tmux attach-session -t '${escaped}'"`;
+        return `wsl.exe -e bash -lc "tmux attach-session -t '${escaped}'"`;
     }
 
     /**
@@ -123,7 +123,7 @@ export class TmuxManager {
      */
     static getKillCommandForWSL(sessionName: string): string {
         const escaped = this.escapeForShell(sessionName);
-        return `wsl.exe -e bash -c "tmux kill-session -t '${escaped}'"`;
+        return `wsl.exe -e bash -lc "tmux kill-session -t '${escaped}'"`;
     }
 
     /**

@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
 import { ConfigManager } from './configManager';
-import { TerminalTasksProvider, TaskTreeItem, TaskConfigDialog, FolderQuickPick, TmuxSessionData, ZellijSessionData } from './terminalWorkspacesProvider';
+import { TerminalTasksProvider, TaskTreeItem, TaskConfigDialog, FolderQuickPick, TmuxSessionData, ZellijSessionData, TerminalTasksDragAndDropController } from './terminalWorkspacesProvider';
 import { TerminalTaskItem, TaskFolder } from './types';
 import { TmuxManager, TmuxSession } from './tmuxManager';
 import { ZellijManager, ZellijSession } from './zellijManager';
@@ -121,10 +121,13 @@ export function activate(context: vscode.ExtensionContext) {
     configManager.loadConfig();
 
     // Create and register the tree view
+    const dragAndDropController = new TerminalTasksDragAndDropController(configManager, treeDataProvider);
+
     const treeView = vscode.window.createTreeView('terminalWorkspacesView', {
         treeDataProvider: treeDataProvider,
         showCollapseAll: true,
-        canSelectMany: false
+        canSelectMany: false,
+        dragAndDropController: dragAndDropController
     });
 
     // Listen for terminal open/close events to update active status indicators
@@ -468,6 +471,17 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Helper to run a task, respecting terminal location setting
     const runTaskDirectly = async (task: TerminalTaskItem) => {
+        // Auto-delete EXITED zellij sessions before launching to avoid resurrection issues
+        const taskProfile = configManager.getProfile(task.profileId || 'wsl-default');
+        const taskUsesZellij = taskProfile?.zellij?.enabled || task.overrides?.zellij?.enabled;
+        if (taskUsesZellij) {
+            const rawName = task.overrides?.zellij?.sessionName || taskProfile?.zellij?.sessionName || task.name;
+            const sessionName = rawName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+            if (ZellijManager.isSessionExited(sessionName)) {
+                ZellijManager.deleteSessionSync(sessionName);
+            }
+        }
+
         const terminalLocation = vscode.workspace.getConfiguration('terminalWorkspaces').get<string>('terminalLocation', 'panel');
 
         if (terminalLocation === 'editor') {
@@ -1509,10 +1523,26 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
 
+            // Warn if session is EXITED — resurrection will re-run the last command which may fail
+            let createFresh = false;
+            if (session.exited) {
+                const choice = await vscode.window.showWarningMessage(
+                    `Session "${session.name}" is EXITED. Attaching will try to re-run its last command (which may fail).`,
+                    'Delete & Fresh Shell',
+                    'Attach Anyway'
+                );
+                if (choice === 'Delete & Fresh Shell') {
+                    ZellijManager.deleteSessionSync(session.name);
+                    createFresh = true;
+                } else if (choice !== 'Attach Anyway') {
+                    return; // Cancelled
+                }
+            }
+
             // Check if terminal with this name already exists
             const terminalName = `zellij: ${session.name}`;
             const existingTerminal = findTerminalByName(terminalName);
-            if (existingTerminal) {
+            if (existingTerminal && !createFresh) {
                 // Reuse existing terminal - just show it
                 try {
                     existingTerminal.show();
@@ -1533,9 +1563,16 @@ export function activate(context: vscode.ExtensionContext) {
 
             terminal.show();
 
-            // Send the attach command
+            // Send the appropriate command
             const isRemoteWSL = vscode.env.remoteName === 'wsl';
-            if (isRemoteWSL) {
+            if (createFresh) {
+                // Create a fresh session (old one was deleted)
+                if (isRemoteWSL) {
+                    terminal.sendText(ZellijManager.getNewSessionCommand(session.name));
+                } else {
+                    terminal.sendText(ZellijManager.getNewSessionCommandForWSL(session.name));
+                }
+            } else if (isRemoteWSL) {
                 terminal.sendText(ZellijManager.getAttachCommand(session.name));
             } else {
                 // On Windows, need to go through WSL with proper escaping
@@ -1761,6 +1798,75 @@ export function activate(context: vscode.ExtensionContext) {
         }
     );
 
+    const deleteAllExitedZellijSessionsCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.deleteAllExitedZellijSessions',
+        async () => {
+            // Get all zellij sessions and filter to EXITED ones
+            const allSessions = ZellijManager.getSessions();
+            const exitedSessions = allSessions.filter(s => s.exited);
+
+            if (exitedSessions.length === 0) {
+                vscode.window.showInformationMessage('No EXITED zellij sessions to delete');
+                return;
+            }
+
+            const confirm = await vscode.window.showWarningMessage(
+                `Delete ${exitedSessions.length} EXITED zellij session(s)? This cannot be undone.`,
+                { modal: true },
+                'Delete All'
+            );
+
+            if (confirm !== 'Delete All') {
+                return;
+            }
+
+            const { exec } = require('child_process');
+            const isRemoteWSL = vscode.env.remoteName === 'wsl';
+            const isWindows = process.platform === 'win32';
+
+            let deletedCount = 0;
+            let failedCount = 0;
+
+            for (const session of exitedSessions) {
+                try {
+                    const command = (isRemoteWSL || !isWindows)
+                        ? ZellijManager.getDeleteCommand(session.name)
+                        : ZellijManager.getDeleteCommandForWSL(session.name);
+
+                    await new Promise<void>((resolve) => {
+                        exec(command, (error: Error | null) => {
+                            if (error) {
+                                // Ignore "not found" errors - session may already be gone
+                                const isNotFound = error.message?.includes('session not found') ||
+                                                   error.message?.includes('No zellij server listening');
+                                if (!isNotFound) {
+                                    failedCount++;
+                                } else {
+                                    deletedCount++;
+                                }
+                            } else {
+                                deletedCount++;
+                            }
+                            resolve();
+                        });
+                    });
+                } catch {
+                    failedCount++;
+                }
+            }
+
+            if (failedCount > 0) {
+                vscode.window.showWarningMessage(`Deleted ${deletedCount} session(s), ${failedCount} failed`);
+            } else {
+                vscode.window.showInformationMessage(`Deleted ${deletedCount} EXITED zellij session(s)`);
+            }
+
+            setTimeout(() => {
+                treeDataProvider.refresh();
+            }, 200);
+        }
+    );
+
     // =========================================================================
     // SEARCH TASKS
     // =========================================================================
@@ -1944,6 +2050,29 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     // =========================================================================
+    // FILTER TOGGLE
+    // =========================================================================
+
+    const toggleFilter = () => {
+        treeDataProvider.toggleActiveFilter();
+        vscode.commands.executeCommand(
+            'setContext',
+            'terminalWorkspaces.showActiveOnly',
+            treeDataProvider.isFilterActive
+        );
+    };
+
+    const toggleActiveFilterCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.toggleActiveFilter',
+        toggleFilter
+    );
+
+    const toggleActiveFilterOffCommand = vscode.commands.registerCommand(
+        'terminalWorkspaces.toggleActiveFilterOff',
+        toggleFilter
+    );
+
+    // =========================================================================
     // REGISTER ALL
     // =========================================================================
 
@@ -1986,6 +2115,9 @@ export function activate(context: vscode.ExtensionContext) {
         importZellijSessionsCommand,
         attachAllZellijSessionsCommand,
         refreshZellijSessionsCommand,
+        deleteAllExitedZellijSessionsCommand,
+        toggleActiveFilterCommand,
+        toggleActiveFilterOffCommand,
         configWatcher
     );
 }

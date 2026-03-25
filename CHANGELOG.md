@@ -5,6 +5,28 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.0] - 2026-03-25
+
+### Added
+
+- **Drag-and-Drop Reordering** - Drag tasks and folders to reorder them in the sidebar. Move items between folders or back to root level by dropping onto targets
+- **Show Active Only Filter** - New filter toggle button in the sidebar title bar. Click to show only tasks with running terminals (green/yellow indicators). Click again to show all. Uses `$(filter)` / `$(filter-filled)` icons
+- **EXITED Session Indicators** - Zellij sessions in EXITED state now show a red indicator with "(EXITED)" label and warning tooltip
+- **Delete All EXITED Sessions** - Bulk command in the Zellij Sessions header context menu to permanently remove all EXITED sessions at once
+- **Auto-cleanup of EXITED Sessions** - When launching a zellij task, any EXITED session with the same name is automatically deleted first, preventing the resurrection prompt
+- **EXITED Attach Warning** - When attaching to an EXITED untracked session, a dialog offers "Delete & Fresh Shell" (recommended) or "Attach Anyway"
+
+### Fixed
+
+- **Zellij Resurrection Issue** - Fixed the annoying "Command not found: claude" error when reattaching to EXITED zellij sessions. The extension now auto-deletes EXITED sessions before creating fresh ones
+- **Delete Requires Kill First** - Zellij delete commands now automatically kill the session first, preventing "must kill before deleting" errors
+- **Login Shell for WSL** - Changed WSL commands from `bash -c` to `bash -lc` (login shell) so PATH includes user-installed tools like `claude`, `zellij`, etc.
+
+### Changed
+
+- `getParent()` now implemented with parent map cache (previously stubbed) — enables drag-and-drop support
+- Zellij delete commands chain `kill-session` before `delete-session` automatically
+
 ## [0.6.2] - 2025-01-16
 
 ### Added

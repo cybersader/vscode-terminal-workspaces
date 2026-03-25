@@ -11,6 +11,8 @@ export interface ZellijSession {
      * imported with a fallback to the workspace folder.
      */
     path?: string;
+    /** Whether the session is in EXITED state (processes terminated, can be resurrected or deleted) */
+    exited: boolean;
 }
 
 export class ZellijManager {
@@ -78,8 +80,10 @@ export class ZellijManager {
                     const match = cleanLine.match(/^([^\s(]+)/);
                     const name = match ? match[1] : cleanLine;
                     if (!name) return null;
+                    const exited = cleanLine.includes('EXITED');
                     return {
-                        name
+                        name,
+                        exited
                     };
                 })
                 .filter((s): s is ZellijSession => s !== null && s.name.length > 0);
@@ -139,7 +143,9 @@ export class ZellijManager {
      * Note: delete-session fully removes the session (cannot be resurrected)
      */
     static getDeleteCommand(sessionName: string): string {
-        return `zellij delete-session '${this.escapeForShell(sessionName)}'`;
+        const escaped = this.escapeForShell(sessionName);
+        // Kill first (in case session is still running), then delete
+        return `zellij kill-session '${escaped}' 2>/dev/null; zellij delete-session '${escaped}'`;
     }
 
     /**
@@ -148,7 +154,16 @@ export class ZellijManager {
      */
     static getAttachCommandForWSL(sessionName: string): string {
         const escaped = this.escapeForShell(sessionName);
-        return `wsl.exe -e bash -c "zellij attach '${escaped}'"`;
+        return `wsl.exe -e bash -lc "zellij attach '${escaped}'"`;
+    }
+
+    /**
+     * Get the WSL-wrapped command for creating a new session
+     * Used when running from Windows Local mode (not WSL Remote)
+     */
+    static getNewSessionCommandForWSL(sessionName: string): string {
+        const escaped = this.escapeForShell(sessionName);
+        return `wsl.exe -e bash -lc "zellij -s '${escaped}'"`;
     }
 
     /**
@@ -157,7 +172,7 @@ export class ZellijManager {
      */
     static getKillCommandForWSL(sessionName: string): string {
         const escaped = this.escapeForShell(sessionName);
-        return `wsl.exe -e bash -c "zellij kill-session '${escaped}'"`;
+        return `wsl.exe -e bash -lc "zellij kill-session '${escaped}'"`;
     }
 
     /**
@@ -166,7 +181,8 @@ export class ZellijManager {
      */
     static getDeleteCommandForWSL(sessionName: string): string {
         const escaped = this.escapeForShell(sessionName);
-        return `wsl.exe -e bash -c "zellij delete-session '${escaped}'"`;
+        // Kill first (in case session is still running), then delete
+        return `wsl.exe -e bash -lc "zellij kill-session '${escaped}' 2>/dev/null; zellij delete-session '${escaped}'"`;
     }
 
     /**
@@ -177,6 +193,33 @@ export class ZellijManager {
         // For single-quoted strings in bash, escape single quotes by ending the quote,
         // adding an escaped quote, and starting a new quote: ' -> '\''
         return sessionName.replace(/'/g, "'\\''");
+    }
+
+    /**
+     * Check if a specific session is in EXITED state
+     */
+    static isSessionExited(sessionName: string): boolean {
+        const sessions = this.getSessions();
+        const session = sessions.find(s => s.name === sessionName);
+        return session?.exited ?? false;
+    }
+
+    /**
+     * Synchronously kill+delete a session (for cleaning up EXITED sessions before task launch)
+     */
+    static deleteSessionSync(sessionName: string): void {
+        const escaped = this.escapeForShell(sessionName);
+        const isWindows = process.platform === 'win32';
+
+        const cmd = (this.isRemoteWSL() || !isWindows)
+            ? `zellij kill-session '${escaped}' 2>/dev/null; zellij delete-session '${escaped}' 2>/dev/null`
+            : `wsl.exe -e bash -lc "zellij kill-session '${escaped}' 2>/dev/null; zellij delete-session '${escaped}' 2>/dev/null"`;
+
+        try {
+            execSync(cmd, { stdio: 'pipe', timeout: 5000 });
+        } catch {
+            // Ignore errors - session may already be gone
+        }
     }
 
     private static isRemoteWSL(): boolean {

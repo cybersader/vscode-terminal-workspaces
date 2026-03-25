@@ -39,7 +39,29 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
     // Cache of active zellij session names (refreshed on each tree refresh)
     private activeZellijSessions: Set<string> = new Set();
 
+    // Parent map for getParent() support (needed for drag-and-drop)
+    // Maps child item ID → parent TaskTreeItem (undefined means root)
+    private parentMap: Map<string, TaskTreeItem | undefined> = new Map();
+
+    // Filter state for "show active only" toggle
+    private showActiveOnly: boolean = false;
+
     constructor(private configManager: ConfigManager) {}
+
+    /**
+     * Toggle the active-only filter and refresh the tree
+     */
+    toggleActiveFilter(): void {
+        this.showActiveOnly = !this.showActiveOnly;
+        this.refresh();
+    }
+
+    /**
+     * Whether the active-only filter is currently enabled
+     */
+    get isFilterActive(): boolean {
+        return this.showActiveOnly;
+    }
 
     refresh(): void {
         this._onDidChangeTreeData.fire();
@@ -73,6 +95,9 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
             // This ensures we check actual tmux/zellij session state, not just VS Code terminal existence
             this.refreshActiveSessionsCache();
 
+            // Clear parent map on root refresh (rebuilt as tree items are created)
+            this.parentMap.clear();
+
             const items: TaskTreeItem[] = [];
 
             // Check for untracked tmux sessions
@@ -93,7 +118,14 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
                 return [this.createPlaceholderItem()];
             }
 
-            items.push(...this.itemsToTreeItems(config.items));
+            const configTreeItems = this.itemsToTreeItems(config.items);
+            // Register root-level items in parent map (undefined = root)
+            for (const treeItem of configTreeItems) {
+                if (treeItem.id) {
+                    this.parentMap.set(treeItem.id, undefined);
+                }
+            }
+            items.push(...configTreeItems);
             return items;
         }
 
@@ -104,13 +136,25 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
 
         // Children of zellij sessions header
         if (element.itemData && 'type' in element.itemData && element.itemData.type === 'zellijSessionsHeader') {
-            return this.getUntrackedZellijSessions().map(session => this.createZellijSessionItem(session));
+            let sessions = this.getUntrackedZellijSessions();
+            // When filter is active, hide EXITED sessions
+            if (this.showActiveOnly) {
+                sessions = sessions.filter(s => !s.exited);
+            }
+            return sessions.map(session => this.createZellijSessionItem(session));
         }
 
         // Children of a folder
         if (element.itemData?.type === 'folder') {
             const folder = element.itemData as TaskFolder;
-            return this.itemsToTreeItems(folder.children, true);
+            const childItems = this.itemsToTreeItems(folder.children, true);
+            // Register folder children in parent map
+            for (const child of childItems) {
+                if (child.id) {
+                    this.parentMap.set(child.id, element);
+                }
+            }
+            return childItems;
         }
 
         return [];
@@ -181,8 +225,12 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
     }
 
     getParent(element: TaskTreeItem): vscode.ProviderResult<TaskTreeItem> {
-        // Not implementing for now - needed for reveal() functionality
-        return null;
+        if (!element.id) {
+            return undefined;
+        }
+        const parent = this.parentMap.get(element.id);
+        // undefined in the map means root item; not found also returns undefined
+        return parent;
     }
 
     /**
@@ -302,8 +350,40 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         });
     }
 
+    /**
+     * Check if a task or folder has any active terminals/sessions.
+     * Used by the "show active only" filter.
+     */
+    private isItemActive(item: TaskItem): boolean {
+        if (item.type === 'folder') {
+            return item.children.some(child => this.isItemActive(child));
+        }
+
+        // Task: check for active session or terminal
+        const profile = this.configManager.getProfile(item.profileId || 'wsl-default');
+        const isTmux = profile?.tmux?.enabled || item.overrides?.tmux?.enabled;
+        const isZellij = !isTmux && (profile?.zellij?.enabled || item.overrides?.zellij?.enabled);
+
+        if (isTmux) {
+            const rawSessionName = item.overrides?.tmux?.sessionName || profile?.tmux?.sessionName || item.name;
+            const sanitized = rawSessionName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+            return this.doesSessionExist(rawSessionName, 'tmux') || this.isVSCodeTerminalAttached(item.name, sanitized);
+        } else if (isZellij) {
+            const rawSessionName = item.overrides?.zellij?.sessionName || profile?.zellij?.sessionName || item.name;
+            const sanitized = rawSessionName.replace(/[^a-zA-Z0-9_-]/g, '_').substring(0, 50);
+            return this.doesSessionExist(rawSessionName, 'zellij') || this.isVSCodeTerminalAttached(item.name, sanitized);
+        } else {
+            return this.isVSCodeTerminalAttached(item.name);
+        }
+    }
+
     private itemsToTreeItems(items: TaskItem[], isChild: boolean = false): TaskTreeItem[] {
-        return items.map(item => {
+        // Apply active-only filter if enabled
+        const filteredItems = this.showActiveOnly
+            ? items.filter(item => this.isItemActive(item))
+            : items;
+
+        return filteredItems.map(item => {
             if (item.type === 'folder') {
                 return this.createFolderItem(item, isChild);
             } else {
@@ -544,29 +624,43 @@ export class TerminalTasksProvider implements vscode.TreeDataProvider<TaskTreeIt
         // Set unique ID to preserve state across refreshes
         item.id = `zellij-session-${session.name}`;
 
-        // Check if there's an active terminal attached to this zellij session
-        const isActive = this.isTerminalActive(session.name) || this.isZellijTerminalActive(session.name);
-        const iconColor = isActive
-            ? new vscode.ThemeColor('terminal.ansiGreen')
-            : new vscode.ThemeColor('disabledForeground');
-        item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
-        item.contextValue = 'zellijSession';
-        item.description = session.path || '';
-        item.tooltip = [
-            `Session: ${session.name}`,
-            session.path ? `Path: ${session.path}` : '',
-            '',
-            'Right-click to attach or import as task'
-        ].filter(l => l).join('\n');
+        if (session.exited) {
+            // EXITED sessions: red indicator, warn about resurrection
+            item.iconPath = new vscode.ThemeIcon('circle-filled', new vscode.ThemeColor('terminal.ansiRed'));
+            item.contextValue = 'zellijSessionExited';
+            item.description = '(EXITED)';
+            item.tooltip = [
+                `Session: ${session.name}`,
+                'Status: EXITED',
+                '',
+                'Attaching will resurrect with the last running command.',
+                'Use "Delete Session" to permanently remove.'
+            ].join('\n');
+        } else {
+            // Active/background sessions: green if terminal attached, grey otherwise
+            const isActive = this.isTerminalActive(session.name) || this.isZellijTerminalActive(session.name);
+            const iconColor = isActive
+                ? new vscode.ThemeColor('terminal.ansiGreen')
+                : new vscode.ThemeColor('disabledForeground');
+            item.iconPath = new vscode.ThemeIcon('circle-filled', iconColor);
+            item.contextValue = 'zellijSession';
+            item.description = session.path || '';
+            item.tooltip = [
+                `Session: ${session.name}`,
+                session.path ? `Path: ${session.path}` : '',
+                '',
+                'Right-click to attach or import as task'
+            ].filter(l => l).join('\n');
 
-        // Only attach on click if setting is enabled
-        const clickToAttach = vscode.workspace.getConfiguration('terminalWorkspaces').get<boolean>('zellijClickToAttach', false);
-        if (clickToAttach) {
-            item.command = {
-                command: 'terminalWorkspaces.attachZellijSession',
-                title: 'Attach to Session',
-                arguments: [session]
-            };
+            // Only attach on click if setting is enabled
+            const clickToAttach = vscode.workspace.getConfiguration('terminalWorkspaces').get<boolean>('zellijClickToAttach', false);
+            if (clickToAttach) {
+                item.command = {
+                    command: 'terminalWorkspaces.attachZellijSession',
+                    title: 'Attach to Session',
+                    arguments: [session]
+                };
+            }
         }
 
         return item;
@@ -622,6 +716,105 @@ export class TaskTreeItem extends vscode.TreeItem {
         public readonly itemData?: TreeItemData
     ) {
         super(label, collapsibleState);
+    }
+}
+
+// ============================================================================
+// DRAG AND DROP CONTROLLER
+// ============================================================================
+
+export class TerminalTasksDragAndDropController implements vscode.TreeDragAndDropController<TaskTreeItem> {
+    private static readonly MIME_TYPE = 'application/vnd.code.tree.terminalworkspacesview';
+
+    readonly dropMimeTypes: readonly string[] = [TerminalTasksDragAndDropController.MIME_TYPE];
+    readonly dragMimeTypes: readonly string[] = [TerminalTasksDragAndDropController.MIME_TYPE];
+
+    constructor(
+        private configManager: ConfigManager,
+        private treeDataProvider: TerminalTasksProvider
+    ) {}
+
+    handleDrag(
+        source: readonly TaskTreeItem[],
+        dataTransfer: vscode.DataTransfer,
+        _token: vscode.CancellationToken
+    ): void {
+        // Only allow dragging config items (tasks and folders), not session items
+        const draggableItems = source.filter(item => {
+            const type = item.itemData?.type;
+            return type === 'task' || type === 'folder';
+        });
+
+        if (draggableItems.length === 0) {
+            return;
+        }
+
+        const itemIds = draggableItems
+            .map(item => {
+                const data = item.itemData as TaskItem;
+                return data?.id;
+            })
+            .filter((id): id is string => !!id);
+
+        dataTransfer.set(
+            TerminalTasksDragAndDropController.MIME_TYPE,
+            new vscode.DataTransferItem(itemIds)
+        );
+    }
+
+    async handleDrop(
+        target: TaskTreeItem | undefined,
+        dataTransfer: vscode.DataTransfer,
+        token: vscode.CancellationToken
+    ): Promise<void> {
+        const transferItem = dataTransfer.get(TerminalTasksDragAndDropController.MIME_TYPE);
+        if (!transferItem) {
+            return;
+        }
+
+        const itemIds: string[] = transferItem.value;
+        if (!itemIds || itemIds.length === 0) {
+            return;
+        }
+
+        // Determine drop target context
+        const targetData = target?.itemData;
+
+        // Reject drops onto session-related items
+        if (targetData && 'type' in targetData) {
+            const targetType = targetData.type;
+            if (targetType === 'tmuxSessionsHeader' || targetType === 'tmuxSession' ||
+                targetType === 'zellijSessionsHeader' || targetType === 'zellijSession') {
+                return;
+            }
+        }
+
+        for (const itemId of itemIds) {
+            if (token.isCancellationRequested) {
+                break;
+            }
+
+            try {
+                if (!targetData) {
+                    // Dropped on root (empty space) — move to end of root items
+                    await this.configManager.reorderItem(itemId, null, Infinity);
+                } else if (targetData.type === 'folder') {
+                    // Dropped onto a folder — move into that folder at the end
+                    await this.configManager.reorderItem(itemId, targetData.id, Infinity);
+                } else if (targetData.type === 'task') {
+                    // Dropped onto a task — insert right after that task in its parent
+                    const targetItem = this.configManager.findItemById(targetData.id);
+                    if (targetItem) {
+                        const parentId = targetItem.parent ? targetItem.parent.id : null;
+                        await this.configManager.reorderItem(itemId, parentId, targetItem.index + 1);
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to move item ${itemId}:`, error);
+            }
+        }
+
+        this.treeDataProvider.refresh();
     }
 }
 

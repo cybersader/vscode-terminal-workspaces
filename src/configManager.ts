@@ -314,6 +314,84 @@ export class ConfigManager {
         await this.saveConfig();
     }
 
+    /**
+     * Move an item to a specific position within a target parent.
+     * Used for drag-and-drop reordering.
+     */
+    async reorderItem(itemId: string, targetParentId: string | null, targetIndex: number): Promise<void> {
+        const config = await this.getConfig();
+        const found = this.findItemById(itemId);
+        if (!found) {
+            return; // Item not found, silently ignore
+        }
+
+        // Prevent moving a folder into itself or a descendant
+        if (targetParentId && this.isDescendantOf(targetParentId, itemId)) {
+            return;
+        }
+
+        // Get the source array
+        const sourceArray = found.parent ? found.parent.children : config.items;
+
+        // Get the target array
+        let targetArray: TaskItem[];
+        if (targetParentId) {
+            const targetParent = this.findItemById(targetParentId);
+            if (!targetParent || targetParent.item.type !== 'folder') {
+                return; // Invalid target
+            }
+            targetArray = (targetParent.item as TaskFolder).children;
+        } else {
+            targetArray = config.items;
+        }
+
+        const sameParent = sourceArray === targetArray;
+
+        // Remove from source
+        sourceArray.splice(found.index, 1);
+
+        // Adjust target index if same parent and item was before the target
+        let adjustedIndex = targetIndex;
+        if (sameParent && found.index < targetIndex) {
+            adjustedIndex = targetIndex - 1;
+        }
+
+        // Clamp to valid range
+        adjustedIndex = Math.max(0, Math.min(adjustedIndex, targetArray.length));
+
+        // Insert at target position
+        targetArray.splice(adjustedIndex, 0, found.item);
+
+        await this.saveConfig();
+    }
+
+    /**
+     * Check if targetId is a descendant of ancestorId (or the same item).
+     * Prevents circular nesting when dragging folders.
+     */
+    private isDescendantOf(targetId: string, ancestorId: string): boolean {
+        if (targetId === ancestorId) {
+            return true;
+        }
+
+        const ancestor = this.findItemById(ancestorId);
+        if (!ancestor || ancestor.item.type !== 'folder') {
+            return false;
+        }
+
+        const folder = ancestor.item as TaskFolder;
+        for (const child of folder.children) {
+            if (child.id === targetId) {
+                return true;
+            }
+            if (child.type === 'folder' && this.isDescendantOf(targetId, child.id)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     // =========================================================================
     // FLATTENING & TRAVERSAL
     // =========================================================================
@@ -504,9 +582,9 @@ export class ConfigManager {
                     // On Windows, use wsl.exe
                     command = `wsl.exe --cd "${windowsPath}"`;
                     if (profile.tmux?.enabled) {
-                        command = `wsl.exe -e bash -c "cd '${wslPath}' && ${this.buildTmuxCommand(sessionName, profile)}"`;
+                        command = `wsl.exe -e bash -lc "cd '${wslPath}' && ${this.buildTmuxCommand(sessionName, profile)}"`;
                     } else if (profile.zellij?.enabled) {
-                        command = `wsl.exe -e bash -c "cd '${wslPath}' && ${this.buildZellijCommand(sessionName, profile)}"`;
+                        command = `wsl.exe -e bash -lc "cd '${wslPath}' && ${this.buildZellijCommand(sessionName, profile)}"`;
                     }
                     shellOptions = { executable: 'cmd.exe', args: ['/C'] };
                 }
