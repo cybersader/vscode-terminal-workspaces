@@ -225,7 +225,7 @@ export const BUILTIN_PROFILES: Profile[] = [
 export const DEFAULT_CONFIG: TerminalTasksConfig = {
     version: '1.0.0',
     profiles: [],
-    defaultProfileId: 'wsl-default',
+    defaultProfileId: 'default',
     items: [],
     settings: {
         autoGenerateTasksJson: true,

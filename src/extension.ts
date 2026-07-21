@@ -984,12 +984,16 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Import selected sessions
             let imported = 0;
+            const isNativeLinuxOrMac = process.platform !== 'win32';
+            const isWSL = vscode.env.remoteName === 'wsl';
+            const tmuxProfileId = (isNativeLinuxOrMac || isWSL) ? 'bash' : 'wsl-tmux';
+
             for (const item of toImport) {
                 try {
                     await configManager.addTask({
                         name: item.session.name,
                         path: item.session.path,
-                        profileId: 'wsl-tmux', // Use WSL+tmux profile
+                        profileId: tmuxProfileId,
                         overrides: {
                             tmux: {
                                 enabled: true,
@@ -1055,11 +1059,12 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Send the attach command - tmux will restore the session's working directory
             const isRemoteWSL = vscode.env.remoteName === 'wsl';
-            if (isRemoteWSL) {
-                terminal.sendText(TmuxManager.getAttachCommand(session.name));
-            } else {
-                // On Windows, need to go through WSL with proper escaping
+            if (process.platform === 'win32' && !isRemoteWSL) {
+                // Windows Local — need wsl.exe to access tmux
                 terminal.sendText(TmuxManager.getAttachCommandForWSL(session.name));
+            } else {
+                // WSL Remote, native Linux/macOS — direct tmux call
+                terminal.sendText(TmuxManager.getAttachCommand(session.name));
             }
         }
     );
@@ -1086,10 +1091,14 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             try {
+                const isNativeLinuxOrMac = process.platform !== 'win32';
+                const isWSL = vscode.env.remoteName === 'wsl';
+                const tmuxProfileId = (isNativeLinuxOrMac || isWSL) ? 'bash' : 'wsl-tmux';
+
                 await configManager.addTask({
                     name,
                     path: session.path,
-                    profileId: 'wsl-tmux',
+                    profileId: tmuxProfileId,
                     overrides: {
                         tmux: {
                             enabled: true,
@@ -1567,16 +1576,17 @@ export function activate(context: vscode.ExtensionContext) {
             const isRemoteWSL = vscode.env.remoteName === 'wsl';
             if (createFresh) {
                 // Create a fresh session (old one was deleted)
-                if (isRemoteWSL) {
-                    terminal.sendText(ZellijManager.getNewSessionCommand(session.name));
-                } else {
+                if (process.platform === 'win32' && !isRemoteWSL) {
+                    // Windows Local — need wsl.exe to access zellij
                     terminal.sendText(ZellijManager.getNewSessionCommandForWSL(session.name));
+                } else {
+                    // WSL Remote, native Linux/macOS — direct zellij call
+                    terminal.sendText(ZellijManager.getNewSessionCommand(session.name));
                 }
-            } else if (isRemoteWSL) {
-                terminal.sendText(ZellijManager.getAttachCommand(session.name));
-            } else {
-                // On Windows, need to go through WSL with proper escaping
+            } else if (process.platform === 'win32' && !isRemoteWSL) {
                 terminal.sendText(ZellijManager.getAttachCommandForWSL(session.name));
+            } else {
+                terminal.sendText(ZellijManager.getAttachCommand(session.name));
             }
         }
     );
@@ -1628,10 +1638,14 @@ export function activate(context: vscode.ExtensionContext) {
             }
 
             try {
+                const isNativeLinuxOrMac = process.platform !== 'win32';
+                const isWSL = vscode.env.remoteName === 'wsl';
+                const zellijProfileId = (isNativeLinuxOrMac || isWSL) ? 'bash-zellij' : 'wsl-zellij';
+
                 await configManager.addTask({
                     name,
                     path: taskPath,
-                    profileId: 'wsl-zellij',
+                    profileId: zellijProfileId,
                     overrides: {
                         zellij: {
                             enabled: true,
@@ -1726,12 +1740,16 @@ export function activate(context: vscode.ExtensionContext) {
 
             // Import selected sessions
             let imported = 0;
+            const isNativeLinuxOrMac = process.platform !== 'win32';
+            const isWSL = vscode.env.remoteName === 'wsl';
+            const zellijProfileId = (isNativeLinuxOrMac || isWSL) ? 'bash-zellij' : 'wsl-zellij';
+
             for (const item of toImport) {
                 try {
                     await configManager.addTask({
                         name: item.session.name,
                         path: item.session.path || defaultPath,
-                        profileId: 'wsl-zellij',
+                        profileId: zellijProfileId,
                         overrides: {
                             zellij: {
                                 enabled: true,
@@ -1779,11 +1797,10 @@ export function activate(context: vscode.ExtensionContext) {
 
                 terminal.show();
 
-                if (isRemoteWSL) {
-                    terminal.sendText(ZellijManager.getAttachCommand(session.name));
-                } else {
-                    // On Windows, need to go through WSL with proper escaping
+                if (process.platform === 'win32' && !isRemoteWSL) {
                     terminal.sendText(ZellijManager.getAttachCommandForWSL(session.name));
+                } else {
+                    terminal.sendText(ZellijManager.getAttachCommand(session.name));
                 }
             }
 
@@ -1946,11 +1963,10 @@ export function activate(context: vscode.ExtensionContext) {
 
                 terminal.show(false); // Don't steal focus for subsequent terminals
 
-                if (isRemoteWSL) {
-                    terminal.sendText(TmuxManager.getAttachCommand(session.name));
-                } else {
-                    // On Windows, need to go through WSL with proper escaping
+                if (process.platform === 'win32' && !isRemoteWSL) {
                     terminal.sendText(TmuxManager.getAttachCommandForWSL(session.name));
+                } else {
+                    terminal.sendText(TmuxManager.getAttachCommand(session.name));
                 }
             }
 
