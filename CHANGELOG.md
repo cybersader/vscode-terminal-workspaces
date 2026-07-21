@@ -5,6 +5,14 @@ All notable changes to Terminal Workspaces will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.7.1] - 2026-07-21
+
+> **Note:** This is the final release. Terminal Workspaces is discontinued and no longer actively maintained. See the [README](README.md) for details and the successor project, [portagenty](https://github.com/cybersader/portagenty).
+
+### Fixed
+
+- **Native Linux/macOS platform detection** - Fixed tmux/zellij attach and import commands that incorrectly routed native Linux/macOS through the WSL code path, calling `wsl.exe` (which doesn't exist on those platforms). Attach/kill now use the correct `process.platform === 'win32' && !isRemoteWSL` check, and import selects platform-appropriate profiles (`bash`/`bash-zellij` instead of hardcoded `wsl-tmux`/`wsl-zellij`). `DEFAULT_CONFIG.defaultProfileId` changed from `wsl-default` to the platform-neutral `default`. (Thanks to Sergey Gabenko / @cosmaz — [#1](https://github.com/cybersader/vscode-terminal-workspaces/pull/1))
+
 ## [0.7.0] - 2026-03-25
 
 ### Added
@@ -255,6 +263,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Highlights |
 |---------|------|------------|
+| 0.7.1 | 2026-07-21 | Final release. Native Linux/macOS platform detection fix (#1) |
+| 0.7.0 | 2026-03-25 | Drag-and-drop, active filter, EXITED session auto-cleanup |
 | 0.6.2 | 2025-01-16 | Delete Zellij Session command, shell escaping fixes |
 | 0.6.1 | 2025-12-31 | Yellow dot for background sessions (session running, no terminal) |
 | 0.6.0 | 2025-12-31 | Zellij session discovery, Windows Local mode detection |
