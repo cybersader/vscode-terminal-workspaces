@@ -16,6 +16,13 @@
   </a>
 </p>
 
+> [!WARNING]
+> **This project is discontinued and no longer actively maintained.**
+>
+> I've moved to a TUI-based approach with [**portagenty**](https://github.com/cybersader/portagenty) ([docs](https://cybersader.github.io/portagenty/)), which I've found much simpler than the VS Code extension model for managing terminal sessions across projects. This extension still works, but no new features or fixes are planned.
+>
+> **Interested in taking it over?** Maintainership is open — if you'd like to adopt this project, please [open an issue](https://github.com/cybersader/vscode-terminal-workspaces/issues) to get in touch.
+
 A VS Code extension for managing terminal sessions with a visual sidebar interface. Supports WSL, tmux, Zellij, PowerShell, nested folder organization, profiles, and more.
 
 ## Features
